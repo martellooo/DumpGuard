@@ -1,0 +1,30 @@
+
+cpp_quote("#pragma comment(lib, \"rpcrt4.lib\")")
+
+typedef [context_handle] void* CONTEXT_HANDLE;
+
+// Isolated User Mode
+
+typedef long long IUM_HANDLE;
+typedef int IUM_BOOL;
+
+typedef struct _IUM_LARGE_INTEGER {
+    long long QuadPart;
+} IUM_LARGE_INTEGER, *PIUM_LARGE_INTEGER;
+
+typedef struct _IUM_UNICODE_STRING {
+    unsigned short Length;
+    unsigned short MaximumLength;
+    [unique, size_is(MaximumLength/2), length_is(Length/2)] wchar_t* Buffer;
+} IUM_UNICODE_STRING, *PIUM_UNICODE_STRING;
+
+typedef struct _IUM_STRING {
+    unsigned short Length;
+    unsigned short MaximumLength;
+    [unique, size_is(MaximumLength), length_is(Length)] byte* Buffer;
+} IUM_STRING, *PIUM_STRING;
+
+typedef struct _IUM_OCTET_STRING {
+    unsigned int Length;
+    [unique, size_is(Length)] char* Value;
+} IUM_OCTET_STRING, *PIUM_OCTET_STRING;

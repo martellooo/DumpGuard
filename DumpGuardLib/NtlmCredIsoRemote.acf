@@ -1,0 +1,6 @@
+
+interface NtlmCredIsoRemote
+{
+	typedef [encode, decode, allocate(all_nodes)] PNtlmCredIsoRemoteInput;
+	typedef [encode, decode, allocate(all_nodes)] PNtlmCredIsoRemoteOutput;
+}

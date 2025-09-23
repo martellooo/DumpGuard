@@ -1,0 +1,68 @@
+[
+    uuid(12345678-1234-1234-1234-123456789abc),
+        version(1.0)
+]
+library RemoteGuardCallIds
+{
+    typedef enum _RemoteGuardCallId
+    {
+        RemoteCallMinimum = 0,
+
+        // start generic calls - not tied to a specific SSP
+        RemoteCallGenericMinimum = 0,
+        RemoteCallGenericReserved = 0,
+        RemoteCallGenericMaximum = 0xff,
+        // end general calls
+
+        // Start Kerberos remote calls
+        RemoteCallKerbMinimum = 0x100,
+
+        RemoteCallKerbNegotiateVersion = 0x100,
+        RemoteCallKerbBuildAsReqAuthenticator,
+        RemoteCallKerbVerifyServiceTicket,
+        RemoteCallKerbCreateApReqAuthenticator,
+        RemoteCallKerbDecryptApReply,
+        RemoteCallKerbUnpackKdcReplyBody,
+        RemoteCallKerbComputeTgsChecksum,
+        RemoteCallKerbBuildEncryptedAuthData,
+        RemoteCallKerbPackApReply,
+        RemoteCallKerbHashS4UPreauth,                           // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbSignS4UPreauthData,                       // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbVerifyChecksum,
+        RemoteCallKerbBuildTicketArmorKey,                      // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbBuildExplicitArmorKey,                    // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbVerifyFastArmoredTgsReply,                // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbVerifyEncryptedChallengePaData,           // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbBuildFastArmoredKdcRequest,               // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbDecryptFastArmoredKerbError,              // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbDecryptFastArmoredAsReply,                // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbDecryptPacCredentials,
+        RemoteCallKerbCreateECDHKeyAgreement,                   // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbCreateDHKeyAgreement,                     // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbDestroyKeyAgreement,                      // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbKeyAgreementGenerateNonce,                // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbFinalizeKeyAgreement,                     // Not implemented by KerbCredIsoRemote
+        RemoteCallKerbSignPkcsMessage,                          // Not supported
+        RemoteCallKerbConvertCredManPasswordToKerbPassword,     // Not implemented by KerbCredIsoRemote
+
+        RemoteCallKerbMaximum = 0x1ff,
+        // End Kerberos remote calls
+
+        // Start NTLM remote calls
+        RemoteCallNtlmMinimum = 0x200,
+
+        RemoteCallNtlmNegotiateVersion = 0x200,
+        RemoteCallNtlmProtectCredential,
+        RemoteCallNtlmLm20GetNtlm3ChallengeResponse,
+        RemoteCallNtlmCalculateNtResponse,
+        RemoteCallNtlmCalculateUserSessionKeyNt,
+        RemoteCallNtlmCompareCredentials,
+
+        RemoteCallNtlmMaximum = 0x2ff,
+        // End NTLM remote calls
+
+        RemoteCallMaximum = 0x2ff,
+
+        RemoteCallInvalid = 0xffff // This enumeration MUST fit in 16 bits
+    } RemoteGuardCallId;
+}
