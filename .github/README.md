@@ -3,21 +3,21 @@
 ![Usage Scenarios](usages.png)
 
 ## Dumping Own Guarded Credentials
-Requirement: **None**.
+Privilege Requirement: **None**.
 
 ```
 DumpGuard.exe /mode:self /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<PASSWORD>
 ```
 
 ## Dumping All Guarded Credentials
-Requirement: **SYSTEM Privileges**.
+Privilege Requirement: **SYSTEM**.
 
 ```
 DumpGuard.exe /mode:all /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<PASSWORD>
 ```
 
 ## Dumping All Non-Guarded or RCG Credential
-Requirement: **SYSTEM Privileges**.
+Privilege Requirement: **SYSTEM**.
 
 ```
 DumpGuard.exe /mode:all
