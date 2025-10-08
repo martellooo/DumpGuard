@@ -1,3 +1,3 @@
 # DumpGuard
 
-[Usage Scenarios](usages.png)
+![Usage Scenarios](usages.png)
