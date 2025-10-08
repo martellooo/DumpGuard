@@ -215,12 +215,17 @@ namespace DumpGuard
                             try
                             {
                                 DumpCredentialsSelf(arguments);
-                                dumped_identities.Add(identity_sid);
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine($"Failed to dump credentials for '{identity.Name}': {e.Message}");
                             }
                             finally
                             {
                                 Interop.RevertToSelf();
                             }
+
+                            dumped_identities.Add(identity_sid);
                         }
                         finally
                         {

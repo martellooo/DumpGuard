@@ -16,6 +16,7 @@ namespace DumpGuard.Spnego
             Kerberos = kerb_server;
         }
 
+        // Imitates SPNEGO (MS-SPNG : Simple and Protected GSS-API Negotiation)
         public bool AcceptNegotiationToken(byte[] NegoRequest, out byte[] NegoResponse)
         {
             NegoResponse = null;
