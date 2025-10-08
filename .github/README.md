@@ -16,7 +16,7 @@ Privilege Requirement: **SYSTEM**.
 DumpGuard.exe /mode:all /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<PASSWORD>
 ```
 
-## Dumping All Non-Guarded Credentials or Credentials Guarded By Remote Credential Guard
+## Dumping All Credentials Protected By Remote Credential Guard
 Privilege Requirement: **SYSTEM**.
 
 ```
