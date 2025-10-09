@@ -43,8 +43,8 @@ lsa-whisperer.exe msv1_0 Lm20GetChallengeResponse --luid {session id} --challeng
 ## Acknowledgements
 
 Thank you to [SpecterOps](https://specterops.io/) for supporting this research and to my coworkers who have helped with its development.
-- [Elad Shamir](https://twitter.com/elad_shamir) for inspiring this tool and research, and for offering valuable perspective and encouragement whenever I hit a wall.
-- [Evan McBroom](https://github.com/EvanMcBroom) for sharing useful insights on LSA internals and providing ASN.1 encoders for most of the structures used in this project.
+- [Elad Shamir](https://twitter.com/elad_shamir) - for inspiring this tool and research, and for offering valuable perspective and encouragement whenever I hit a wall.
+- [Evan McBroom](https://github.com/EvanMcBroom) - for sharing useful insights on LSA internals and providing ASN.1 encoders for most of the structures used in this project.
 
 ## Related Tools
 - [Mimikatz](https://github.com/gentilkiwi/mimikatz) ([Benjamin Delpy](https://github.com/gentilkiwi)) - A little tool to play with Windows security.
