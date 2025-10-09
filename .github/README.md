@@ -47,9 +47,10 @@ Thank you to [SpecterOps](https://specterops.io/) for supporting this research a
 - [Evan McBroom](https://github.com/EvanMcBroom) - for sharing useful insights on LSA internals and providing ASN.1 encoders for most of the structures used in this project.
 
 ## Related Tools
+- [LSA Whisperer](https://github.com/EvanMcBroom/lsa-whisperer) ([Evan McBroom](https://github.com/EvanMcBroom)) - A toolset for interacting with authentication packages using their individual message protocols.
+- [Rubeus](https://github.com/GhostPack/Rubeus) ([Will Schroeder](https://github.com/HarmJ0y), [Charlie Clark](https://x.com/exploitph)) - A C# toolset for raw Kerberos interaction and abuses.
 - [Mimikatz](https://github.com/gentilkiwi/mimikatz) ([Benjamin Delpy](https://github.com/gentilkiwi)) - A little tool to play with Windows security.
 - [Kekeo](https://github.com/gentilkiwi/kekeo) ([Benjamin Delpy](https://github.com/gentilkiwi)) - A little toolbox to play with Microsoft Kerberos in C.
-- [Rubeus](https://github.com/GhostPack/Rubeus) ([Will Schroeder](https://github.com/HarmJ0y), [Charlie Clark](https://x.com/exploitph)) - A C# toolset for raw Kerberos interaction and abuses.
 
 ## Related Work
 - [Oliver Lyak](https://github.com/ly4k) ([2022](https://research.ifcr.dk/pass-the-challenge-defeating-windows-defender-credential-guard-31a892eee22)) - For what is, to my knowledge, the only public research on dumping credentials protected by Credential Guard.
