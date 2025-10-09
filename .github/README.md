@@ -46,10 +46,8 @@ Thank you to [SpecterOps](https://specterops.io/) for supporting this research a
 - [Elad Shamir](https://twitter.com/elad_shamir) for inspiring this tool and research, and for offering valuable perspective and encouragement whenever I hit a wall.
 - [Evan McBroom](https://github.com/EvanMcBroom) for sharing useful insights on LSA internals and providing ASN.1 encoders for most of the structures used in this project.
 
-## Related Tools
-- [Mimikatz](https://github.com/gentilkiwi/mimikatz) ([Benjamin Delpy](https://github.com/gentilkiwi)) - A little tool to play with Windows security.
-- [Kekeo](https://github.com/gentilkiwi/kekeo) ([Benjamin Delpy](https://github.com/gentilkiwi)) - A little toolbox to play with Microsoft Kerberos in C.
-
 ## Related Work
+- [Benjamin Delpy](https://github.com/gentilkiwi) ([Mimikatz](https://github.com/gentilkiwi/mimikatz)) - A little tool to play with Windows security.
+- [Benjamin Delpy](https://github.com/gentilkiwi) ([Kekeo](https://github.com/gentilkiwi/kekeo)) - A little toolbox to play with Microsoft Kerberos in C.
 - [Oliver Lyak](https://github.com/ly4k) ([2022](https://research.ifcr.dk/pass-the-challenge-defeating-windows-defender-credential-guard-31a892eee22)), for what is, to my knowledge, the only public research on dumping credentials protected by Credential Guard.
 - [James Forshaw](https://x.com/tiraniddo) ([2022](https://project-zero.issues.chromium.org/issues/42451433), [2022](https://project-zero.issues.chromium.org/issues/42451435), [2022](https://project-zero.issues.chromium.org/issues/42451397), [2022](https://project-zero.issues.chromium.org/issues/42451436)), for vulnerability submissions that slightly documents some of the undocumented interfaces that we have researched.
