@@ -9,7 +9,7 @@ DumpGuard is a credential dumping tool that can extract the NTLMv1 hashes of use
 
 The tool relies on the _Remote Credential Guard_ protocol, and allows credential dumping even when _Credential Guard_ is enabled on the local host. You may download prebuilt copies from the release section of this repository.
 
-**Disclaimer:** This tool is intended for educational and legitimate testing purposes only. The author of this repository do not condone, support, encourage, or take responsibility for damages, misuse, or legal consequences.
+**Disclaimer:** This tool is provided solely for educational and legitimate testing purposes only. The author of this repository does not condone or support any type of misuse and assumes no responsibility for damages or legal consequences incurred as a result of using this tool.
 
 ## Usage Overview
 ![Usage Scenarios](usages.png)
