@@ -26,6 +26,8 @@ Privilege Requirement: **SYSTEM**.
 DumpGuard.exe /mode:all
 ```
 
+This is equivalent to the `msv1_0 Lm20GetChallengeResponse --luid {session id} --challenge {challenge to clients} [flags...]` command in [LSA Whisperer](https://github.com/EvanMcBroom/lsa-whisperer).
+
 ## Acknowledgements
 
 Thank you to [SpecterOps](https://specterops.io/) for supporting this research and to my coworkers who have helped with its development.
