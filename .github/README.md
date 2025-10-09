@@ -1,4 +1,7 @@
 # DumpGuard
+[![BSD3 License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg?style=flat)](LICENSE)
+[![Bloodhound Slack](https://img.shields.io/badge/BloodHound%20Slack-4A154B?logo=slack&logoColor=white)](https://ghst.ly/BHSlack)
+[![Sponsored by SpecterOps](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/specterops/.github/main/config/shield.json)](https://github.com/specterops)
 
 ![Logo](logo.jpeg)
 
@@ -35,7 +38,7 @@ lsa-whisperer.exe msv1_0 Lm20GetChallengeResponse --luid {session id} --challeng
 
 Thank you to [SpecterOps](https://specterops.io/) for supporting this research and to my coworkers who have helped with its development.
 - [Elad Shamir](https://twitter.com/elad_shamir) for inspiring this tool and research, and for offering valuable perspective and encouragement whenever I hit a wall.
-- [Evan McBroom](https://github.com/EvanMcBroom) for sharing useful insights on LSA internals and providing ASN.1 encoders for most of the structures used in the project.
+- [Evan McBroom](https://github.com/EvanMcBroom) for sharing useful insights on LSA internals and providing ASN.1 encoders for most of the structures used in this project.
 
 ## Related Work
 
