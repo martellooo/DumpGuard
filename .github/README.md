@@ -14,21 +14,35 @@ The tool relies on the _Remote Credential Guard_ protocol, and allows credential
 ## Usage Overview
 ![Usage Scenarios](usages.png)
 
-## Dumping Own Credentials Protected By Credential Guard
+The diagram above shows the different scenarios in which we have the opportunity to extract credentials. The techniques used in the above diagram can be found below.
+
+## Dumping Own Session (using Remote Credential Guard)
+To dump an NTLMv1 response for the current user from an unprivileged context, we can authenticate towards an SPN-enabled account using Remote Credential Guard, and leverage the established security context to request an NTLMv1 hash from the NtlmCredIsoRemote interface.
+
+This works regardless of the state of Credential Guard.
+
 Privilege Requirement: **None**.
 
 ```
 DumpGuard.exe /mode:self /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<PASSWORD>
 ```
 
-## Dumping All Credentials Protected By Credential Guard
+## Dumping All Sessions (using Remote Credential Guard)
+To dump NTLMv1 responses for all currently authenticated users from a privileged SYSTEM context, we can impersonate tokens from running processes, then authenticate towards an SPN-enabled account using Remote Credential Guard, and leverage the established security context to request an NTLMv1 hash from the NtlmCredIsoRemote interface.
+
+This works regardless of the state of Credential Guard.
+
 Privilege Requirement: **SYSTEM**.
 
 ```
 DumpGuard.exe /mode:all /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<PASSWORD>
 ```
 
-## Dumping All Credentials Protected By Remote Credential Guard
+## Dumping All Sessions (using Microsoft v1 authentication package)
+To dump NTLMv1 responses for all currently authenticated users from a privileged SYSTEM context, we can interact with the NTLM SSP and request responses for each individual logon session ID.
+
+This works only if Credential Guard is disabled or if a user has authenticated to the local host from a remote host over Remote Credential Guard.
+
 Privilege Requirement: **SYSTEM**.
 
 ```
