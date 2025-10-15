@@ -19,23 +19,23 @@ The diagram above shows the different scenarios in which we have the opportunity
 ## Dumping Own Session (using Remote Credential Guard)
 To dump an NTLMv1 response for the current user from an unprivileged context, we can authenticate towards an SPN-enabled account using Remote Credential Guard, and leverage the established security context to request an NTLMv1 hash from the NtlmCredIsoRemote interface.
 
-This works regardless of the state of Credential Guard.
+This works regardless of the state of Credential Guard, but requires credentials for an SPN-enabled account.
 
 Privilege Requirement: **None**.
 
 ```
-DumpGuard.exe /mode:self /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<PASSWORD>
+DumpGuard.exe /mode:self /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<PASSWORD> [/spn:<SPN>]
 ```
 
 ## Dumping All Sessions (using Remote Credential Guard)
 To dump NTLMv1 responses for all currently authenticated users from a privileged SYSTEM context, we can impersonate tokens from running processes, then authenticate towards an SPN-enabled account using Remote Credential Guard, and leverage the established security context to request an NTLMv1 hash from the NtlmCredIsoRemote interface.
 
-This works regardless of the state of Credential Guard.
+This works regardless of the state of Credential Guard, but requires credentials for an SPN-enabled account.
 
 Privilege Requirement: **SYSTEM**.
 
 ```
-DumpGuard.exe /mode:all /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<PASSWORD>
+DumpGuard.exe /mode:all /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<PASSWORD> [/spn:<SPN>]
 ```
 
 ## Dumping All Sessions (using Microsoft v1 authentication package)
