@@ -41,7 +41,7 @@ DumpGuard.exe /mode:all /domain:<DOMAIN> /username:<SAMACCOUNTNAME> /password:<P
 ## Dumping All Sessions (using Microsoft v1 authentication package)
 To dump NTLMv1 responses for all currently authenticated users from a privileged SYSTEM context, we can interact with the NTLM SSP and request responses for each individual logon session ID.
 
-This works only under one of the following conditions:
+This works only under the following conditions:
 - Credential Guard is disabled on the local system (we can extract from all local sessions).
 - Remote users are authenticated to the local system from a remote host over Remote Credential Guard.
 
