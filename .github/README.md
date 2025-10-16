@@ -61,6 +61,10 @@ This is equivalent to the following [LSA Whisperer](https://github.com/EvanMcBro
 lsa-whisperer.exe msv1_0 Lm20GetChallengeResponse --luid {session id} --challenge {challenge to clients} [flags...]
 ```
 
+## Bonus Information
+
+I have reverse engineered and recreated all the interfaces exposed by Credential Guard (*LsaIso.exe*) from NDR64 bytecode and included them in this repository, in case anyone wants to conduct further research.
+
 ## Acknowledgements
 
 Thank you to [SpecterOps](https://specterops.io/) for supporting this research and to my coworkers who have helped with its development.
