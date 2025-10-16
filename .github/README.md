@@ -13,13 +13,11 @@ The tool relies on the _Remote Credential Guard_ protocol, and allows credential
 
 ## Usage Overview
 
+The following table depicts the different techniques supported by the program as well as their requirements and their ability to dump credentials protected by Credential Guard.
+
 | Description | 2 | 3 |
 | -------- | ------- | ------- |
 | test | 2 | 3 |
-
-![Usage Scenarios](usages.png)
-
-The diagram above shows the different scenarios in which we have the opportunity to extract credentials. The techniques used in the above diagram can be found below.
 
 ## Dumping Own Session (using Remote Credential Guard)
 To dump an NTLMv1 response for the current user from an unprivileged context, we can authenticate towards an SPN-enabled account using Remote Credential Guard, and leverage the established security context to request an NTLMv1 hash from the NtlmCredIsoRemote interface.
