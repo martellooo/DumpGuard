@@ -14,9 +14,8 @@ The tool relies on the _Remote Credential Guard_ protocol, and allows credential
 ## Usage Overview
 
 | Description | 2 | 3 |
--------------------------
+| -------- | ------- | ------- |
 | test | 2 | 3 |
--------------------------
 
 ![Usage Scenarios](usages.png)
 
