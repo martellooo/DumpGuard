@@ -17,7 +17,7 @@ The following table depicts the different techniques supported by the program as
 
 | Technique | Requires<br>SYSTEM | Requires<br>SPN Account | Can Dump<br>Credential Guard |
 | -------- | :-------: | :-------: | :-------: |
-| Extract own credentials via the Remote Credential Guard protocol | X | ✓ | ✓ |
+| Extract own credentials via Remote Credential Guard protocol | X | ✓ | ✓ |
 | test | ✓ | ✓ | ✓ |
 | test | ✓ | X | X |
 
