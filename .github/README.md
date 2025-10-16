@@ -15,8 +15,7 @@ The tool relies on the _Remote Credential Guard_ protocol, and allows credential
 
 The following table depicts the different techniques supported by the program as well as their requirements and their ability to dump credentials protected by Credential Guard.
 
-| Technique | Requires SYSTEM | Requires 
-SPN Account | Can Dump Credential Guard |
+| Technique | Requires<br>SYSTEM | Requires<br>SPN Account | Can Dump<br>Credential Guard |
 | -------- | :-------: | :-------: | :-------: |
 | test | X | ✓ | ✓ |
 | test | ✓ | ✓ | ✓ |
