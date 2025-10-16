@@ -18,8 +18,8 @@ The following table depicts the different techniques supported by the program as
 | Technique | Requires<br>SYSTEM | Requires<br>SPN Account | Can Dump<br>Credential Guard |
 | -------- | :-------: | :-------: | :-------: |
 | Extract own credentials via Remote Credential Guard protocol | X | ✓ | ✓ |
-| test | ✓ | ✓ | ✓ |
-| test | ✓ | X | X |
+| Extract all credentials via Remote Credential Guard protocol | ✓ | ✓ | ✓ |
+| Extract all credentials via MSV1_0 authentication package | ✓ | X | X |
 
 ## Dumping Own Session (using Remote Credential Guard)
 To dump an NTLMv1 response for the current user from an unprivileged context, we can authenticate towards an SPN-enabled account using Remote Credential Guard, and leverage the established security context to request an NTLMv1 hash from the NtlmCredIsoRemote interface.
