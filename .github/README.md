@@ -12,6 +12,7 @@ The tool relies on the _Remote Credential Guard_ protocol, and allows credential
 **Disclaimer:** This tool is provided strictly for educational and legitimate testing purposes only. The author of this repository does not condone or support any type of misuse and assumes no responsibility for damages or legal consequences incurred as a result of using this tool.
 
 ## Usage Overview
+
 | Description | 2 | 3 |
 -------------------------
 | test | 2 | 3 |
