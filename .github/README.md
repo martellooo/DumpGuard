@@ -63,7 +63,7 @@ lsa-whisperer.exe msv1_0 Lm20GetChallengeResponse --luid {session id} --challeng
 
 ## Bonus Information
 
-I have reverse engineered and recreated all the interfaces exposed by Credential Guard (*LsaIso.exe*) from NDR64 bytecode and included them in this repository, in case anyone wants to conduct further research.
+I have reverse engineered and recreated all the interfaces exposed by Credential Guard (*LsaIso.exe*) and included them in this repository, in case anyone wants to conduct further research.
 
 ## Acknowledgements
 
