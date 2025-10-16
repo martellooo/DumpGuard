@@ -1,0 +1,18 @@
+
+[strict_context_handle] interface BCryptIum { 
+	BCryptIumOpenAlgorithmProvider([context_handle_noserialize] Context);
+	BCryptIumGetProperty([context_handle_noserialize] Context);
+	BCryptIumSetProperty([context_handle_noserialize] Context);
+	BCryptIumCloseAlgorithmProvider([context_handle_noserialize] Context);
+	BCryptIumGenerateSymmetricKey([context_handle_noserialize] Context);
+	BCryptIumGenerateKeyPair([context_handle_noserialize] Context);
+	BCryptIumEncrypt([context_handle_noserialize] Context);
+	BCryptIumDecrypt([context_handle_noserialize] Context);
+	BCryptIumExportKey([context_handle_noserialize] Context);
+	BCryptIumImportKey([context_handle_noserialize] Context);
+	BCryptIumImportKeyPair([context_handle_noserialize] Context);
+	BCryptIumFinalizeKeyPair([context_handle_noserialize] Context);
+	BCryptIumDestroyKey([context_handle_noserialize] Context);
+	BCryptIumSignHash([context_handle_noserialize] Context);
+	BCryptIumCheckKey([context_handle_noserialize] Context);
+}

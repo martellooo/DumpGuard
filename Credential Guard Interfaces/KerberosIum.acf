@@ -1,0 +1,2 @@
+
+typedef [allocate(all_nodes)] PSECPKG_SUPPLEMENTAL_CRED_ARRAY;

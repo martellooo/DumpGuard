@@ -1,0 +1,282 @@
+import "BaseTypes.idl";
+
+typedef struct _IUM_BCRYPT_PKCS1_PADDING_INFO {
+    [unique, string] wchar_t* pszAlgId;
+} IUM_BCRYPT_PKCS1_PADDING_INFO, *PIUM_BCRYPT_PKCS1_PADDING_INFO;
+
+typedef struct _IUM_BCRYPT_OAEP_PADDING_INFO {
+    [unique, string] wchar_t* pszAlgId;
+    [unique, size_is(cbLabel)] char* pbLabel;
+    unsigned int cbLabel;
+} IUM_BCRYPT_OAEP_PADDING_INFO, *PIUM_BCRYPT_OAEP_PADDING_INFO;
+
+typedef struct _IUM_BCRYPT_PSS_PADDING_INFO {
+    [unique, string] wchar_t* pszAlgId;
+    unsigned int cbSalt;
+} IUM_BCRYPT_PSS_PADDING_INFO, *PIUM_BCRYPT_PSS_PADDING_INFO;
+
+[switch_type(unsigned int)] typedef union _IUM_BCRYPT_PADDING_UNION {
+    [case(1)] [unique] IUM_BCRYPT_PKCS1_PADDING_INFO* Pkcs1PaddingInfo1; // Idk if both cases are PKCS1, but they use same structure (according to NDR64 structures)
+    [case(2)] [unique] IUM_BCRYPT_PKCS1_PADDING_INFO* Pkcs1PaddingInfo2; // Idk if both cases are PKCS1, but they use same structure (according to NDR64 structures)
+    [case(3)] [unique] IUM_BCRYPT_OAEP_PADDING_INFO* OaepPaddingInfo;
+    [case(4)] [unique] IUM_BCRYPT_PSS_PADDING_INFO* PssPaddingInfo;
+} IUM_BCRYPT_PADDING_UNION, *PIUM_BCRYPT_PADDING_UNION;
+
+typedef struct _IUM_BCRYPT_PADDING_INFO {
+    [range(1, 4)] unsigned int PaddingType;
+    [switch_is(PaddingType)] IUM_BCRYPT_PADDING_UNION PaddingInfo;
+} IUM_BCRYPT_PADDING_INFO, *PIUM_BCRYPT_PADDING_INFO;
+
+typedef struct _IUM_BCryptBuffer {
+    unsigned int cbBuffer;
+    unsigned int BufferType;
+    [unique, size_is(cbBuffer)] char* pvBuffer;
+} IUM_BCryptBuffer, *PIUM_BCryptBuffer;
+
+typedef struct _IUM_BCryptBufferDesc {
+    unsigned int ulVersion;
+    unsigned int cBuffers;
+    [unique, size_is(cBuffers)] IUM_BCryptBuffer* pBuffers;
+} IUM_BCryptBufferDesc, *PIUM_BCryptBufferDesc;
+
+[
+    uuid(57CCE375-4430-47A6-BB96-2CAD0D2FD140),
+    version(1.0)
+]
+interface BCryptIum
+{
+    int BCryptIumGetClientContext(
+        [in] handle_t Binding, 
+        [out] CONTEXT_HANDLE* Context
+    );
+
+    int BCryptIumReleaseContext(
+        [in, out] CONTEXT_HANDLE* Context
+    );
+
+    int BCryptIumOpenAlgorithmProvider(
+        [in] CONTEXT_HANDLE Context,
+        [out] IUM_HANDLE* Algorithm,
+        [in, string] wchar_t* AlgId,
+        [in, string, unique] wchar_t* Implementation,
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumGetProperty(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Object, 
+        [in, string] wchar_t* Property, 
+        [in, out, unique, size_is(OutputSize)] char* Output, 
+        [in] unsigned int OutputSize, 
+        [out] unsigned int* ResultSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumSetProperty(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Object, 
+        [in, string] wchar_t* Property, 
+        [in, size_is(InputSize)] char* Input, 
+        [in] unsigned int InputSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumCloseAlgorithmProvider(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Algorithm, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumGenerateSymmetricKey(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Algorithm, 
+        [out] IUM_HANDLE* Key, 
+        [in, out, unique, size_is(KeyObjectSize)] char* KeyObject, 
+        [in] unsigned int KeyObjectSize, 
+        [in, size_is(SecretSize)] char* Secret, 
+        [in] unsigned int SecretSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumGenerateKeyPair(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Algorithm, 
+        [out] IUM_HANDLE* Key, 
+        [in] unsigned int Length,
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumEncrypt(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Key, 
+        [in, unique, size_is(InputSize)] char* Input, 
+        [in] unsigned int InputSize, 
+        [in, unique] IUM_BCRYPT_PADDING_INFO* PaddingInfo, 
+        [in, unique, size_is(IvSize)] char* Iv, 
+        [in] unsigned int IvSize, 
+        [in, out, unique, size_is(OutputSize)] char* Output, 
+        [in] unsigned int OutputSize, 
+        [out] unsigned int* ResultSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumDecrypt(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Key, 
+        [in, unique, size_is(InputSize)] char* Input, 
+        [in] unsigned int InputSize, 
+        [in, unique] IUM_BCRYPT_PADDING_INFO* PaddingInfo, 
+        [in, unique, size_is(IvSize)] char* Iv, 
+        [in] unsigned int IvSize, 
+        [in, out, unique, size_is(OutputSize)] char* Output, 
+        [in] unsigned int OutputSize, 
+        [out] unsigned int* ResultSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumExportKey(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Key,
+        [in] IUM_HANDLE ExportKey,
+        [in, string] wchar_t* BlobType, 
+        [in, out, unique, size_is(OutputSize)] char* Output,
+        [in] unsigned int OutputSize, 
+        [out] unsigned int* ResultSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumImportKey(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Algorithm, 
+        [in] IUM_HANDLE ImportKey,
+        [in, string] wchar_t* BlobType, 
+        [out] IUM_HANDLE* Key, 
+        [in, out, unique, size_is(KeyObjectSize)] char* KeyObject, 
+        [in] unsigned int KeyObjectSize, 
+        [in, size_is(InputSize)] char* Input, 
+        [in] unsigned int InputSize, 
+        [in] unsigned int flags
+    );
+
+    int BCryptIumImportKeyPair(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Algorithm, 
+        [in] IUM_HANDLE ImportKey, 
+        [in, string] wchar_t* BlobType, 
+        [out] IUM_HANDLE* Key, 
+        [in, size_is(InputSize)] char* Input, 
+        [in] unsigned int InputSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumDuplicateKey(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Key, 
+        [out] IUM_HANDLE* NewKey, 
+        [in, out, unique, size_is(KeyObjectSize)] char* KeyObject,
+        [in] unsigned int KeyObjectSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumFinalizeKeyPair(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Key, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumDestroyKey(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Key
+    );
+
+    int BCryptIumDestroySecret(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Secret
+    );
+
+    int BCryptIumSignHash(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Key,
+        [in, unique] IUM_BCRYPT_PADDING_INFO* PaddingInfo,
+        [in, size_is(InputSize)] char* Input, 
+        [in] unsigned int InputSize, 
+        [in, out, unique, size_is(OutputSize)] char* Output, 
+        [in] unsigned int OutputSize, 
+        [out] unsigned int* ResultSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumVerifySignature(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Key, 
+        [in, unique] IUM_BCRYPT_PADDING_INFO* PaddingInfo,
+        [in, size_is(HashSize)] char* Hash, 
+        [in] unsigned int HashSize, 
+        [in, size_is(SignatureSize)] char* Signature, 
+        [in] unsigned int SignatureSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumSecretAgreement(
+        [in] CONTEXT_HANDLE Context,
+        [in] IUM_HANDLE PrivateKey, 
+        [in] IUM_HANDLE PublicKey, 
+        [out] IUM_HANDLE* AgreedSecret, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumDeriveKey(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE SharedSecret, 
+        [in, string] wchar_t* KDF, 
+        [in, unique] IUM_BCryptBufferDesc* ParameterList, 
+        [in, out, unique, size_is(DerivedKeySize)] char* DerivedKey, 
+        [in] unsigned int DerivedKeySize, 
+        [out] unsigned int* ResultSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumKeyDerivation(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Key, 
+        [in, unique] IUM_BCryptBufferDesc* ParameterList, 
+        [in, out, unique, size_is(DerivedKeySize)] char* DerivedKey, 
+        [in] unsigned int DerivedKeySize, 
+        [out] unsigned int* ResultSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumCreateClaim(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_HANDLE Key, 
+        [in] IUM_HANDLE p2,                                     // Doesn't seem to be really used
+        [in] unsigned int ClaimType, 
+        [in, unique] IUM_BCryptBufferDesc* ParameterList, 
+        [in, out, unique, size_is(ClaimSize)] char* Claim, 
+        [in] unsigned int ClaimSize, 
+        [out] unsigned int* ResultSize, 
+        [in] unsigned int Flags
+    );
+
+    int BCryptIumGetIdkSPub(
+        [in] CONTEXT_HANDLE Context, 
+        [in, out, unique, size_is(SigningKeySize)] char* SigningKey, 
+        [in] unsigned int SigningKeySize, 
+        [out] unsigned int* ResultSize
+    );
+
+    int BCryptIumCheckKey(
+        [in] CONTEXT_HANDLE Context,
+        [in, size_is(KeySize)] char* Key,
+        [in] unsigned int KeySize,
+        [in, out, unique, size_is(ReEncryptedKeySize)] char* ReEncryptedKey,    // Always null in NCryptProv.dll
+        [in] unsigned int ReEncryptedKeySize,                                   // Always 0 in NCryptProv.dll
+        [out] unsigned int* ResultSize
+    );
+
+    int BCryptIumPingTrustlet(
+        [in] CONTEXT_HANDLE Context, 
+        [in] unsigned int Ping, 
+        [out] unsigned int* Pong                                // Returns [Ping + 1]
+    );
+}

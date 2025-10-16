@@ -1,0 +1,23 @@
+
+[
+    uuid(39730EC4-82EA-4FDF-8A45-C408E393E212),
+    version(1.0)
+]
+interface CredManIum 
+{
+    int CredManIumProtectCredential(
+        [in] handle_t Binding, 
+        [in] unsigned int CredentialSize, 
+        [in, size_is(CredentialSize)] char* Credential, 
+        [out] unsigned int* EncryptedSize, 
+        [out, size_is(,*EncryptedSize)] char** Encrypted
+    );
+
+    int CredManIumCheckProtectedCredential(
+        [in] handle_t Binding, 
+        [in] unsigned int EncryptedSize, 
+        [in, size_is(EncryptedSize)] char* Encrypted, 
+        [out] unsigned int* ReEncryptedSize, 
+        [out, size_is(,*ReEncryptedSize)] char** ReEncrypted
+    );
+}

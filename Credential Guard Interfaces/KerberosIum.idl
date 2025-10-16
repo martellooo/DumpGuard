@@ -1,0 +1,451 @@
+import "BaseTypes.idl";
+
+typedef long long KEY_AGREEMENT_HANDLE;
+
+// For some reason, using a typedef unsigned int pointer (IUM_PUINT) creates a mixed type of size_is indirection.
+// We need this indirection type to match the NDR64 structures present in 'Kerberos.dll' and 'LsaIso.exe'.
+typedef unsigned int IUM_UINT, *IUM_UINT_PTR;
+
+typedef struct _IUM_CRYPT_BIT_BLOB {
+    unsigned int cbData;
+    [unique, size_is(cbData)] char* pbData;
+    unsigned int cUnusedBits;
+} IUM_CRYPT_BIT_BLOB, *PIUM_CRYPT_BIT_BLOB;
+
+typedef struct _KerbSharedConfiguration {
+    int MinimumSaltIterations;      // Minimum iterations for PA-ETYPE-INFO2 (AES128 (17) and AES256 (18) etypes, passed via S2K parameter).
+    int DefaultSaltIterations;      // Default iterations for PA-ETYPE-INFO
+    int MaximumSaltIterations;      // Maximum iterations for PA-ETYPE-INFO2 (AES128 (17) and AES256 (18) etypes, passed via S2K parameter).
+    int DisableEmptyAesKeys;        // Disable the inclusion of empty AES128 (17) and AES256 (18) etype keys with 0 iteration salt in built key lists
+    int Reserved;                   // Seems unused?
+} KerbSharedConfiguration;
+
+typedef struct _KERB_ADJUSTED_TIME {
+    IUM_LARGE_INTEGER SystemTime;   // GetSystemTimeAsFileTime
+    IUM_LARGE_INTEGER SkewedTime;   // LocalTime + TimeSkew
+    IUM_LARGE_INTEGER TimeSkew;
+} KERB_ADJUSTED_TIME, *PKERB_ADJUSTED_TIME;
+
+typedef struct _KERB_INTERNAL_NAME {
+    short NameType;
+    unsigned short NameCount;
+    [unique, size_is(NameCount)] IUM_UNICODE_STRING* Names;
+} KERB_INTERNAL_NAME, *PKERB_INTERNAL_NAME;
+
+typedef enum _KERB_ACCOUNT_TYPE {
+    UserAccount = 0,
+    MachineAccount = 1,
+    DomainTrustAccount = 2,
+    UnknownAccount = 3,
+} KERB_ACCOUNT_TYPE, *PKERB_ACCOUNT_TYPE;
+
+typedef struct _KERB_ASN1_DATA {
+    unsigned int Pdu;
+    unsigned int Length;
+    [unique, size_is(Length)] char* Asn1Buffer;
+} KERB_ASN1_DATA, *PKERB_ASN1_DATA;
+
+typedef struct _KERB_PREAUTH_DATA {
+    unsigned int Type;
+    KERB_ASN1_DATA Data;
+} KERB_PREAUTH_DATA, *PKERB_PREAUTH_DATA;
+
+typedef struct _KERB_PA_DATA {
+    int PreauthDataType;
+    IUM_OCTET_STRING PreauthData;
+} KERB_PA_DATA, *PKERB_PA_DATA;
+
+typedef struct _KERB_FAST_ARMOR {
+    int ArmorType;
+    IUM_OCTET_STRING ArmorData;
+} KERB_FAST_ARMOR, *PKERB_FAST_ARMOR;
+
+typedef struct _KERB_ENCRYPTION_KEY {
+    [ignore] void* CredIsoObj;
+    int _8;                         // Can't find this in any public structs, but maybe some type of protection state?
+    int KeyType;
+    IUM_OCTET_STRING KeyValue;
+} KERB_ENCRYPTION_KEY, *PKERB_ENCRYPTION_KEY;
+
+typedef enum _KERB_PLAINTEXT_PASSWORD_PROTECTION {
+    KERB_PASSWORD_NO_PROTECTION = 0,
+    KERB_PASSWORD_ENCRYPTED_BY_LSA_ISO = 1,
+    KERB_PASSWORD_LSA_PROTECTED = 2,
+} KERB_PLAINTEXT_PASSWORD_PROTECTION, *PKERB_PLAINTEXT_PASSWORD_PROTECTION;
+
+[switch_type(int)] typedef union _KERB_PLAINTEXT_PASSWORD_STORAGE {
+    [case(1)] IUM_OCTET_STRING EncryptedData;
+    [default] IUM_UNICODE_STRING Text;
+} KERB_PLAINTEXT_PASSWORD_STORAGE, *PKERB_PLAINTEXT_PASSWORD_STORAGE;
+
+typedef struct _KERB_PLAINTEXT_PASSWORD {
+    [ignore] int* CredIsoObj;
+    KERB_PLAINTEXT_PASSWORD_PROTECTION Protection;
+    [switch_is(Protection)] KERB_PLAINTEXT_PASSWORD_STORAGE Storage;
+} KERB_PLAINTEXT_PASSWORD, *PKERB_PLAINTEXT_PASSWORD;
+
+typedef struct _KERB_KEY_DATA {
+    IUM_UNICODE_STRING Salt;
+    unsigned int IterationCount;
+    KERB_ENCRYPTION_KEY Key;
+} KERB_KEY_DATA, *PKERB_KEY_DATA;
+
+typedef struct _KERB_STORED_CREDENTIAL {
+    unsigned short Revision;
+    unsigned short Flags;
+    unsigned short CredentialCount;
+    unsigned short ServiceCredentialCount;
+    unsigned short OldCredentialCount;
+    unsigned short OlderCredentialCount;
+    IUM_UNICODE_STRING DefaultSalt;
+    unsigned int DefaultIterationCount;
+    [size_is(CredentialCount + ServiceCredentialCount + OldCredentialCount + OlderCredentialCount)] KERB_KEY_DATA Credentials[];
+} KERB_STORED_CREDENTIAL, *PKERB_STORED_CREDENTIAL;
+
+typedef struct _SECPKG_SUPPLEMENTAL_CRED {
+    IUM_UNICODE_STRING PackageName;
+    unsigned int CredentialSize;
+    [size_is(CredentialSize)] char* Credentials;
+} SECPKG_SUPPLEMENTAL_CRED, *PSECPKG_SUPPLEMENTAL_CRED;
+
+typedef struct _SECPKG_SUPPLEMENTAL_CRED_ARRAY {
+    unsigned int CredentialCount;
+    [size_is(CredentialCount)] SECPKG_SUPPLEMENTAL_CRED Credentials[*];
+} SECPKG_SUPPLEMENTAL_CRED_ARRAY, *PSECPKG_SUPPLEMENTAL_CRED_ARRAY;
+
+[
+    uuid(9CFEEAD6-6135-4FCF-831A-FD3B236023F8),
+    version(1.0)
+]
+interface KerberosIum
+{
+    int KerbIumGetClientContext(
+        [in] handle_t Binding, 
+        [out] CONTEXT_HANDLE* Context
+    );
+
+    int KerbIumEncryptPassword(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_UNICODE_STRING* Password, 
+        [out] IUM_OCTET_STRING* EncryptedPassword
+    );
+
+    int KerbIumBuildPasswordList(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_PLAINTEXT_PASSWORD* Password, 
+        [in] IUM_UNICODE_STRING* Username,                          // Used for salt (Might have switched this with ServicePrincipalName)
+        [in] IUM_UNICODE_STRING* Realm,                             // Used for salt
+        [in, ptr] KERB_PREAUTH_DATA* PreauthData,
+        [in, ptr] KERB_STORED_CREDENTIAL* StoredCredential, 
+        [in, ptr] IUM_UNICODE_STRING* ServicePrincipalName,         // Used for salt (Might have switched this with Username)
+        [in] KERB_ACCOUNT_TYPE AccountType,                         // Used for salt
+        [in] unsigned int Flags,
+        [in] IUM_BOOL IncludeEmptyAesKeys,
+        [out] KERB_STORED_CREDENTIAL** Credentials
+    );
+
+    // [MS-RDPEAR] Create an AS_REQ message authenticator.
+    int KerbIumBuildAsReqAuthenticator( 
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ENCRYPTION_KEY* EncryptionKey,                    // The Kerberos key used to protect the Key Distribution Center (KDC) reply.
+        [in, ptr] KERB_ENCRYPTION_KEY* ArmorKey,                    // [Optional] A FAST armor key. Specify only when an EncryptedChallenge padata-value is needed in the request. When specified, the ArmorKey is combined with the EncryptionKey to derive a FAST challenge key.
+        [in, ptr] KERB_ADJUSTED_TIME* TimeSkew,                     // Adjustment to be applied to local system time. This is used to bring the encrypted authenticator in sync with the KDC time. 
+        [out] int* PreauthDataType,                                 // The padata-type of the PreauthData.
+        [out] IUM_OCTET_STRING* PreauthData                         // The padata-value to be included in the KRB_AS_REQ message.
+    );
+
+    // [MS-RDPEAR] Verify that the given service ticket is valid within the given skew. The encrypted part of the reply data is decrypted for the caller.
+    int KerbIumVerifyServiceTicket(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ASN1_DATA* PackedTicket,                          // The DER-encoded Kerberos ticket to be verified and decrypted.
+        [in] KERB_ENCRYPTION_KEY* ServiceKey,                       // The key required to decrypt the ticket.
+        [in, ptr] KERB_ADJUSTED_TIME* TimeSkew,                     // [Optional] The allowed time drift between a client and the KDC. This is utilized for ticket validity checks based on the system time and ticket start and expiration times.
+        [out] KERB_ASN1_DATA* DecryptedTicket,                      // The decrypted EncTicketPart of the input Kerberos ticket.
+        [out] int* KerbProtocolError                                // Validation result, as expressed by one of the error codes defined by [RFC4120] (section 7.5.9).
+    );
+
+    // [MS-RDPEAR] Create an authenticator for an KRB_AP_REQ message.
+    int KerbIumCreateApReqAuthenticator(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ENCRYPTION_KEY* EncryptionKey,                    // The authenticator encryption key.
+        [in] unsigned int SequenceNumber,                           // The replay detection sequence number.
+        [in] KERB_INTERNAL_NAME* ClientName,                        // The name of the initiating principal.
+        [in] IUM_UNICODE_STRING* ClientRealm,                       // The realm/domain of the initiating principal.
+        [in] KERB_ADJUSTED_TIME* SkewTime,                          // Time adjustment, if any, to account for clock drift from KDC.
+        [in, ptr] KERB_ENCRYPTION_KEY* SubKey,                      // [Optional] Subsession key negotiated with KDC.
+        [in, ptr] KERB_ASN1_DATA* AuthData,                         // [Optional] Additional authentication data.
+        [in, ptr] KERB_ASN1_DATA* GssChecksum,                      // [Optional] Checksum of application data associated with a request.
+        [in] unsigned int KeyUsage,                                 // Alters the encryption key according to [RFC4120] (section 7.5.1).
+        [out] IUM_LARGE_INTEGER* AuthenticatorTime,                 // The timestamp used in the authenticator.
+        [out] KERB_ASN1_DATA* Authenticator,                        // A DER-encoded Kerberos EncryptedData structure containing an authenticator, to be included in a KRB_AP_REQ message. See [RFC4120] (section 5.5.1).
+        [out] int* KerbProtocolError                                // Any protocol-level errors that occur while building the authenticator, as expressed by one of the error codes defined by [RFC4120] (section 7.5.9).
+    );
+
+    // [MS-RDPEAR] Decrypt the encrypted part of an AP_REP.
+    int KerbIumDecryptApReply(
+        [in] CONTEXT_HANDLE Context,
+        [in] KERB_ASN1_DATA* EncryptedReply,                        // The DER-encoded enc-part of a KRB_AP_REP message, to be decrypted
+        [in] KERB_ENCRYPTION_KEY* Key,                              // The Kerberos key needed to decrypt EncryptedReply.
+        [out] KERB_ASN1_DATA* ApReply                               // The decrypted EncAPRepPart in DER-encoded form.
+    );
+
+    // [MS-RDPEAR] Decrypt the encrypted part of a KRB_KDC_REP from the KDC. The type of reply is indicated by the PDU - either encrypted AS_REPLY PDU or encrypted TGS_REPLY PDU.  Key usage allows the caller to specify either the TGS or AS REP key derivation types. This is done to allow back-compatibility with a previous server release which returned the wrong PDU for an AS_REP. 
+    int KerbIumUnpackKdcReplyBody(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ASN1_DATA* EncryptedData,                         // The DER-encoded, encrypted reply data to be decrypted.
+        [in] KERB_ENCRYPTION_KEY* Key,                              // The decryption key.
+        [in, ptr] KERB_ENCRYPTION_KEY* StrengthenKey,               // Reply strengthening key, if any, supplied by the KDC for increasing the strength of encryption on the reply.
+        [in] unsigned int Pdu,                                      // The PDU used to decode the data (62 = KRB_AS_REP, 63 = KRB_TGS_REP).
+        [in] unsigned int KeyUsage,                                 // Key usage flags for decryption (3 = KRB_AS_REP, 8 = KRB_TS_REP).
+        [out] unsigned int* ReplyKeyListSize,                       // [Not described in MS-RDPEAR]
+        [out, size_is(,*ReplyKeyListSize)] KERB_ENCRYPTION_KEY** ReplyKeyList, // [Not described in MS-RDPEAR]
+        [out] int* KerbProtocolError,                               // Any protocol-level errors that have occurred.
+        [out] KERB_ASN1_DATA* ReplyBody                             // The decrypted reply.
+    );
+
+    // [MS-RDPEAR] Calculate the MAC for a KRB_TGS_REQ. In RFC4120 it is referred to as a "Checksum" and thus the terminology is maintained.
+    int KerbIumComputeTgsChecksum(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ASN1_DATA* RequestBody,                           // A DER-encoded KDC-REQ-BODY to be checksummed. 
+        [in] KERB_ENCRYPTION_KEY* Key,                              // Key used to authenticate the checksum.
+        [in] unsigned int ChecksumType,                             // A valid Kerberos checksum type ID, as defined in [RFC3961] or [RFC3962].
+        [out] KERB_ASN1_DATA* Checksum                              // The DER-encoded Kerberos Checksum structure, as defined in [RFC4120] Appendix A.
+    );
+
+    // [MS-RDPEAR] Encrypt the given authorization data which is to be included within the request body of a message to be sent to the KDC.
+    int KerbIumBuildEncryptedAuthData(
+        [in] CONTEXT_HANDLE Context, 
+        [in] unsigned int KeyUsage,                                 // Alters the encryption key according to [RFC4120] (section 7.5.1).
+        [in] KERB_ENCRYPTION_KEY* Key,                              // Encryption key used to build the encrypted output.
+        [in] KERB_ASN1_DATA* PlainAuthData,                         // DER-encoded PA-DATA to be encrypted. See [RFC4120] (section 5.2.7).
+        [out] KERB_ASN1_DATA* EncryptedAuthData                     // DER-encoded Kerberos EncryptedData structure containing the encrypted PADATA.
+    );
+
+    // [MS-RDPEAR] Pack up and encrypt a KRB_AP_REP message using the given session key.
+    int KerbIumPackApReply(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ASN1_DATA* Reply,                                 // A DER-encoded KRB_AP_REP ([RFC4120] section 5.5.2) to marshal.
+        [in] KERB_ASN1_DATA* ReplyBody,                             // A DER-encoded EncAPRepPart ([RFC4120] section 5.5.2) to marshal. 
+        [in] KERB_ENCRYPTION_KEY* SessionKey,                       // Session key to encrypt reply.
+        [out] IUM_UINT_PTR PackedReplySize,                         // The DER-encoded KRB_AP_REP, which contains the encrypted EncAPRepPart from the PackApReply input.
+        [out, size_is(,*PackedReplySize)] char** PackedReply        // Size, in bytes, of encoded reply.
+    );
+
+    // [MS-RDPEAR] Create a MAC for S4U pre-authentication data to be include in a KRB_TGS_REQ when requesting an S4U service ticket for another principal.
+    int KerbIumHashS4UPreauth(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ASN1_DATA* S4UPreauth,                            // The DER-encoded padata-value to be hashed.
+        [in] KERB_ENCRYPTION_KEY* Key,                              // The authentication key used in the secure hash.
+        [in] int ChecksumType,                                      // A valid Kerberos checksum type ID, as defined in [RFC3961] or [RFC3962].
+        [out] IUM_UINT_PTR ChecksumSize,                            // The output hash size.
+        [out, size_is(,*ChecksumSize)] char** ChecksumValue         // The resulting hash of the input pre-authentication data.
+    );
+
+    // [MS-RDPEAR] Create a MAC for S4U pre-authentication data that is for certificate-based users. This pa-data is added to KRB_TGS_REQ when requesting an S4U service ticket.
+    int KerbIumSignS4UPreauthData(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ENCRYPTION_KEY* Key,                              // The authentication key used in the secure hash.
+        [in] IUM_BOOL IsRequest,                                    // If true, then the operation is for a request. Else, the operation is for reply.
+        [in] KERB_ASN1_DATA* UserId,                                // The X509 pre-authentication data to be hashed.
+        [in, out] int* ChecksumType,                                // A valid Kerberos checksum type ID, as defined in [RFC3961] or [RFC3962].
+        [out] IUM_UINT_PTR ChecksumSize,                            // The output hash size.
+        [out, size_is(,*ChecksumSize)] char** ChecksumValue         // The resulting hash of the input pre-authentication data.
+    );
+
+    // [MS-RDPEAR] Calculate a MAC from the given data and compare it to the given expected value. Used to detect mismatches which may indicate tampering with the PAC which is sent by the KDC to the client inside a KRB_KDC_REP.
+    int KerbIumVerifyChecksum(
+        [in] CONTEXT_HANDLE Context,
+        [in] KERB_ENCRYPTION_KEY* Key,                              // Encryption key used in the checksum operation.
+        [in] unsigned int ChecksumType,                             // A valid Kerberos checksum type ID, as defined in [RFC3961] or [RFC3962].
+        [in] unsigned int ExpectedChecksumSize,                     // Expected checksum byte size.
+        [in, size_is(ExpectedChecksumSize)] char* ExpectedChecksum, // Expected checksum data.
+        [in] unsigned int DataToCheckSize,                          // Size of the input data to check.
+        [in, size_is(DataToCheckSize)] char* DataToCheck,           // Input data over which to perform the checksum.
+        [out] IUM_BOOL* IsValid                                     // Indicates whether the calculated checksum matches or not.
+    );
+
+    // [MS-RDPEAR] Build a Kerberos FAST (RFC 6113) ticket armor key by generating a subkey, then combining it with the given shared key.
+    int KerbIumBuildTicketArmorKey(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ENCRYPTION_KEY* SharedKey,                        // The input key to be combined with the generated key.
+        [out] KERB_ENCRYPTION_KEY* SubKey,                          // A generated key to be used in future message exchanges.
+        [out] KERB_ENCRYPTION_KEY* ArmorKey                         // Resulting key that is a combination of the SharedKey, SubKey, and Kerberos FAST salts [RFC6113].
+    );
+
+    // [MS-RDPEAR] Build a Keberos FAST (RFC 6113) explicit armor key by generating a subkey, then combining is with the given ticket session key.
+    int KerbIumBuildExplicitArmorKey(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ENCRYPTION_KEY* TicketSessionKey,                 // The session key from the Kerberos ticket that will be used for explicit FAST armor.
+        [out] KERB_ENCRYPTION_KEY* ArmorSubKey,                     // A generated subkey, combined with the TicketSessionKey, to create the ExplicitArmorKey.
+        [out] KERB_ENCRYPTION_KEY* ExplicitArmorKey,                // The resulting key from combinding ExplicitArmorKey with TicketSessionKey.
+        [out] KERB_ENCRYPTION_KEY* SubKey,                          // A generated subkey, used to create the ArmorKey.
+        [out] KERB_ENCRYPTION_KEY* ArmorKey                         // A key derived from ExplicitArmorKey and SubKey.
+    );
+
+    // [MS-RDPEAR] Verify the Kerberost FAST armor on a KRB_KDC_REP.
+    int KerbIumVerifyFastArmoredTgsReply(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ASN1_DATA* KdcRequest,                            // DER-encoded KRB_KDC_REQ.
+        [in] KERB_ASN1_DATA* KdcReply,                              // The DER-encoded KRB_KDC_REP that corresponds with KdcRequest.
+        [in] KERB_ENCRYPTION_KEY* ArmorKey,                         // Fast armor key.
+        [in] KERB_ENCRYPTION_KEY* ReplyKey,                         // KDC reply decryption key.
+        [out] KERB_ENCRYPTION_KEY* NewReplyKey,                     // A FAST-derived reply key for KDC reply decryption.
+        [out] KERB_ASN1_DATA* ModifiedKdcReply,                     // A modified version of the KdcReply input that contains the Kerberos FASTauthenticated client name and realm.
+        [out] IUM_LARGE_INTEGER* KdcTime                            // The FAST-protected timestamp value from the KDC.
+    );
+
+    // [MS-RDPEAR] Verify the encrypted challenge preauth data included in KRB_KDC_REP. For more info, see PA-ENCRYPTED-CHALLENGE in RFC 6113.
+    int KerbIumVerifyEncryptedChallengePaData(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ENCRYPTION_KEY* ArmorKey,                         // The FAST armor key used to protect data.
+        [in] KERB_ENCRYPTION_KEY* UserKey,                          // The long-term, shared secret.
+        [in] KERB_PA_DATA* PaData,                                  // The EncryptedChallenge padata-value to validate.
+        [out] byte* IsValid                                         // True (1) if valid. False (0) otherwise.
+    );
+
+    // [MS-RDPEAR] Calcuate the PA-FX-FAST armor based off of a given KRB_KDC_REQ, then include that armor in the preauth data of the request. (See RFC 6113)
+    int KerbIumBuildFastArmoredKdcRequest(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KEY_AGREEMENT_HANDLE KeyAgreementHandle,               // [Optional] The Kerberos PKINIT [RFC4556] key agreement, if any, used in this KDC request.
+        [in] KERB_ASN1_DATA* KdcRequest,                            // The DER-encoded KRB_KDC_REQ to be armored. 
+        [in, ptr] KERB_PA_DATA* PaTgsReqPaData,                     // If the KdcRequest is a KRB_TGS_REQ, this is the pre-authentication data included with the request.
+        [in, ptr] KERB_FAST_ARMOR* FastArmor,                       // Explicit FAST armor, if any.
+        [in] KERB_ENCRYPTION_KEY* ArmorKey,                         // Key used to encrypt the armored PA-DATA.
+        [out] KERB_PA_DATA* FastPaDataResult                        // A padata-value containing the FAST armored pre-authentication data that corresponds to the KdcRequest.
+    );
+
+    // [MS-RDPEAR] Decrypt a Kerberos FAST (RFC 6113) armored error message.
+    int KerbIumDecryptFastArmoredKerbError(
+        [in] CONTEXT_HANDLE Context, 
+        [in] int RequestNonce,                                      // The request associated with the error.
+        [in] KERB_ASN1_DATA* InputKerbError,                        // A DER-encoded KRB_ERROR message that contains a FAST authenticated error.
+        [in] KERB_ENCRYPTION_KEY* ArmorKey,                         // The key used to protect the error data.
+        [out] KERB_ASN1_DATA* OutputKerbError,                      // The DER-encoded KRB_ERROR.
+        [out] KERB_ASN1_DATA* FastResponse                          //The DER-encoded KrbFastResponse [RFC6113] (section 5.4.3).
+    );
+
+    // [MS-RDPEAR] Decrypt a Kerberos FAST (RFC 6113) armored KRB_AS_REP.
+    int KerbIumDecryptFastArmoredAsReply(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ASN1_DATA* KdcRequest,                            // The DER-encoded KRB_KDC_REQ that was sent to the KDC.
+        [in] KERB_ASN1_DATA* KdcReply,                              // The DER-encoded KRB_KDC_REP, sent by the KDC to the client.
+        [in] KERB_ENCRYPTION_KEY* ArmorKey,                         // FAST armor key used to protect the Kerberos exchange.
+        [out] KERB_ENCRYPTION_KEY* StrengthenKey,                   // Entropy provided by the KDC to strengthen the reply key, to be used by the client to build an enhanced-strength key for decrypting reply data.
+        [out] KERB_ASN1_DATA* ModifiedKdcReply,                     // A modified version of the KdcReply input that contains the Kerberos FASTauthenticated client name and realm.
+        [out] IUM_LARGE_INTEGER* KdcTime                            // Server time, used to adjust for skew.
+    );
+
+    int KerbIumUpdateSharedConfiguration(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KerbSharedConfiguration* NewConfig,
+        [out] KerbSharedConfiguration* ResultConfig
+    );
+
+    // [MS-RDPEAR] Decrypt the supplemental credentials which are contained with the PAC sent back by the KDC in a KRB_KDC_REP.
+    int KerbIumDecryptPacCredentials(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ENCRYPTION_KEY* Key,                              // Key needed to decrypt the credentials.
+        [in] unsigned int Version,                                  // PPAC_CREDENTIAL_INFO version, as supplied in the Privilege Attribute Certificate (PAC) [MS-PAC].
+        [in] unsigned int EncryptionType,                           // Kerberos etype used for encryption. Kerberos parameters are documented in [KERB-PARAM].
+        [in] unsigned int DataSize,                                 // Size of the credentials from a PPAC_CREDENTIAL_INFO structure.
+        [in, size_is(DataSize)] char* Data,                         // The credential data from a PPAC_CREDENTIAL_INFO structure.
+        [out] PSECPKG_SUPPLEMENTAL_CRED_ARRAY* Credentials          // The decoded array of credentials supplied by the KDC.
+    );
+
+    // [MS-RDPEAR] Create a new ECDH key agreement handle with the given ECC key bit length.
+    int KerbIumCreateECDHKeyAgreement(
+        [in] CONTEXT_HANDLE Context, 
+        [in] unsigned int KeyBitLen,                                // The desired length of the ECC key to use for an ECDH key agreement. Valid values are 256, 384, 521.
+        [out] KEY_AGREEMENT_HANDLE* KeyAgreementHandle,             // A key handle for use with future message exchanges.
+        [out] int* KerbErr,                                         // Any Kerberos protocol-specific errors that occurred when processing the input message.
+        [out] IUM_UINT_PTR EncodedPubKeyLen,                        // Length of the EncodedPubKey buffer.
+        [out, size_is(,*EncodedPubKeyLen)] char** EncodedPubKey     // The encoded subjectPublicKey value, suitable for populating a SubjectPublicKeyInfo structure [RFC3280].
+    );
+
+    // [MS-RDPEAR] Create a new DH key agreement handle.
+    int KerbIumCreateDHKeyAgreement(
+        [in] CONTEXT_HANDLE Context, 
+        [out] IUM_OCTET_STRING* ModulusP,                           // RSA prime modulus P [PKCS1].
+        [out] IUM_OCTET_STRING* GeneratorG,                         // RSA prime generator G [PKCS1].
+        [out] IUM_OCTET_STRING* FactorQ,                            // RSA prime factor Q [PKCS1].
+        [out] KEY_AGREEMENT_HANDLE* KeyAgreementHandle,             // A key handle for use with future message exchanges.
+        [out] int* KerbErr,                                         // Any Kerberos protocol-specific errors that occurred processing the input message.
+        [out] IUM_UINT_PTR LittleEndianPublicKeyLen,                // Byte length of LittleEndianPublicKey.
+        [out, size_is(,*LittleEndianPublicKeyLen)] char** LittleEndianPublicKey // The little-endian representation of the RSA public key value. Suitable for use with the CryptoAPI as a public key blob.
+    );
+
+    int KerbIumGetNtlmSupplementalCredential(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ENCRYPTION_KEY* EncryptionKey, 
+        [out, size_is(,*SupplementalCredentialSize)] char** SupplementalCredential, // Format: struct _MSV1_0_IUM_SUPPLEMENTAL_CREDENTIAL
+        [out] IUM_UINT_PTR SupplementalCredentialSize
+    );
+
+    // [MS-RDPEAR] Destroy a key agreement handle which was previously constructed with either CreateECDHKeyAgreement or CreateDHKeyAgreement.
+    int KerbIumDestroyKeyAgreement(
+        [in] CONTEXT_HANDLE Context,
+        [in] KEY_AGREEMENT_HANDLE KeyAgreementHandle                // The key agreement to be destroyed.
+    );
+
+    // [MS-RDPEAR] Generate a nonce for use with the given key agreement. This nonce is part of the Diffie-Hellman agreement that is part of Kerberos PKINIT (RFC 4556).
+    int KerbIumKeyAgreementGenerateNonce(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KEY_AGREEMENT_HANDLE KeyAgreementHandle,               // The key agreement associated with the nonce.
+        [out] IUM_UINT_PTR NonceLen,                                // The byte length of Nonce.
+        [out, size_is(,*NonceLen)] char** Nonce                     // A nonce for use in a key agreement operation.
+    );
+
+    // [MS-RDPEAR] Finish a Kerberos PKINIT (RFC 4556) key agreement.
+    int KerbIumFinalizeKeyAgreement(
+        [in] CONTEXT_HANDLE Context, 
+        [in, out] KEY_AGREEMENT_HANDLE* KeyAgreementHandle,         // The key agreement to be finished.
+        [in] unsigned int KerbEType,                                // The Kerberos encryption type used for encryption. Kerberos parameters are documented in [KERB-PARAM].
+        [in] unsigned int RemoteNonceLen,                           // The byte length of RemoteNonce.
+        [in, size_is(RemoteNonceLen)] char* RemoteNonce,            // The nonce provided by the remote end of the key agreement.
+        [in] unsigned int X509PublicKeyLen,                         // The byte length of X509PublicKey.
+        [in, size_is(X509PublicKeyLen)] char* X509PublicKey,        // The big-endian server public key.
+        [in] IUM_BOOL p7,                                           // [Not described in MS-RDPEAR] Sets a key metadata attribute to [10 or 2].
+        [out] KERB_ENCRYPTION_KEY* SharedKey                        // The resulting key from the agreement.
+    );
+
+    int KerbIumSignPkcsMessage(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KEY_AGREEMENT_HANDLE KeyAgreementHandle,               // Pseudohandle (-1)
+        [in] unsigned int SmartCardRootInfoSize, 
+        [in, size_is(SmartCardRootInfoSize)] char* SmartCardRootInfo, 
+        [in, string] char* CertPublicKeyAlgorithmOid, 
+        [in] IUM_OCTET_STRING* CertPublicKeyAlgorithmParameters,    // CRYPT_OBJID_BLOB
+        [in] IUM_OCTET_STRING* CertIssuer,                          // CERT_NAME_BLOB
+        [in] IUM_OCTET_STRING* CertSerialNumber,                    // CRYPT_INTEGER_BLOB
+        [in, string] char* AlgorithmOid, 
+        [in] IUM_CRYPT_BIT_BLOB* CertPublicKey, 
+        [in] unsigned int EncodedCertificatesCount, 
+        [in, size_is(EncodedCertificatesCount)] IUM_OCTET_STRING* EncodedCertificates, 
+        [in, ptr, string] char* InnerContentOid, 
+        [in] unsigned int DHRepInfoSize, 
+        [in, size_is(DHRepInfoSize)] char* DHRepInfo,
+        [out] IUM_UINT_PTR SignedMessageSize,
+        [out, size_is(,*SignedMessageSize)] char** SignedMessage
+    );
+
+    int KerbIumConvertCredManPasswordToKerbPassword(
+        [in] CONTEXT_HANDLE Context,
+        [in] IUM_UNICODE_STRING* CredManPassword,
+        [out] IUM_OCTET_STRING* KerbPassword
+    );
+
+    int KerbIumConvertBoundEncryptionKey(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ENCRYPTION_KEY* BoundEncryptionKey,
+        [in] unsigned int BindingKeySize, 
+        [in, size_is(BindingKeySize)] char* BindingKey, 
+        [out] KERB_ENCRYPTION_KEY* EncryptionKey
+    );
+
+    int KerbIumAreEncryptionKeysEqual(
+        [in] CONTEXT_HANDLE Context, 
+        [in] KERB_ENCRYPTION_KEY* LhsEncryptionKey, 
+        [in] KERB_ENCRYPTION_KEY* RhsEncryptionKey, 
+        [out] char* IsEqual
+    );
+}

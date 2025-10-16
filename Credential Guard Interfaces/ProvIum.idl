@@ -1,0 +1,48 @@
+import "BaseTypes.idl";
+
+[
+    uuid(A3E5AF3E-8A33-4737-AF6E-BC1F8ECEE4BF),
+    version(1.0)
+]
+interface ProvIum 
+{
+    int ProvIumCreateMachineKey(
+        [in] handle_t Binding, 
+        [out] unsigned int* MachineKeySize, 
+        [out, size_is(,*MachineKeySize)] char** MachineKey
+    );
+
+    int ProvIumCreateMachineSelfSignedCertificate(
+        [in] handle_t Binding,
+        [in] unsigned int MachineKeySize, 
+        [in, size_is(MachineKeySize)] char* MachineKey, 
+        [in, string] wchar_t* X509CommonName,
+        [out] unsigned int* SelfSignedCertificateSize, 
+        [out, size_is(,*SelfSignedCertificateSize)] char** SelfSignedCertificate
+    );
+
+    int ProvIumCreateMachineCertificateRequest(
+        [in] handle_t Binding, 
+        [in] unsigned int MachineKeySize, 
+        [in, size_is(MachineKeySize)] char* MachineKey,
+        [out] unsigned int* CertificateRequestSize,
+        [out, size_is(,*CertificateRequestSize)] char** CertificateRequest
+    );
+
+    int ProvIumCheckMachineKey(
+        [in] handle_t Binding, 
+        [in] unsigned int MachineKeySize, 
+        [in, size_is(MachineKeySize)] char* MachineKey,
+        [out] unsigned int* ReEncryptedMachineKeySize,
+        [out, size_is(,*ReEncryptedMachineKeySize)] char** ReEncryptedMachineKey
+    );
+
+    int ProvIumCheckRootSecretValidity(
+        [in] handle_t Binding, 
+        [in] unsigned int RootSecretSize, 
+        [in, size_is(RootSecretSize)] char* RootSecret,
+        [out] IUM_BOOL* IsValid,
+        [out] unsigned int* ReEncryptedRootSecretSize, 
+        [out, size_is(,*ReEncryptedRootSecretSize)] char** ReEncryptedRootSecret
+    );
+}

@@ -1,0 +1,30 @@
+
+import "BaseTypes.idl";
+
+[
+    uuid(1707E621-44E3-4F54-BB7D-C537EABB55A5),
+    version(1.0)
+]
+interface CloudApIum 
+{
+    int GetContext(
+        [in] handle_t Binding,
+        [out] CONTEXT_HANDLE* Context
+    );
+
+    int GenerateKeyBindingKeyPair(
+        [in] CONTEXT_HANDLE Context, 
+        [out] unsigned int* PublicKeySize, 
+        [out, size_is(,*PublicKeySize)] char** PublicKey, 
+        [out] unsigned int* PrivateKeySize, 
+        [out, size_is(,*PrivateKeySize)] char** PrivateKey
+    );
+
+    int VerifyKeyBindingKeyPair(
+        [in] CONTEXT_HANDLE Context,
+        [in] unsigned int PublicKeySize, 
+        [in, size_is(PublicKeySize)] char* PublicKey,
+        [in] unsigned int PrivateKeySize, 
+        [in, size_is(PrivateKeySize)] char* PrivateKey
+    );
+}

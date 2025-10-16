@@ -1,0 +1,13 @@
+
+[
+    uuid(EDA3C9E4-0D4C-4BB7-B612-0E89D4F0607D),
+    version(1.0)
+]
+interface LsaIsoMgmtIum 
+{
+    // 2 = default
+    // 3 = Credential Guard enabled
+    int GetRunningServices(
+        [in] handle_t Binding
+    );
+}

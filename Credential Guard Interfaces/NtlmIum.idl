@@ -1,0 +1,287 @@
+import "BaseTypes.idl";
+
+typedef struct _OLD_LARGE_INTEGER {
+    int LowPart;
+    int HighPart;
+} OLD_LARGE_INTEGER, *POLD_LARGE_INTEGER;
+
+typedef struct _CYPHER_BLOCK_8 {
+    byte Data[8];
+} CYPHER_BLOCK, NT_CHALLENGE, LM_CHALLENGE, LM_SESSION_KEY;
+
+typedef struct _CYPHER_BLOCK_16 {
+    CYPHER_BLOCK Blocks[2];
+} NT_OWF_PASSWORD, LM_OWF_PASSWORD, USER_SESSION_KEY;
+
+typedef struct _CYPHER_BLOCK_20 {
+    byte Data[20];
+} SHA_OWF_PASSWORD, IUM_MSV1_0_CREDENTIAL_KEY;
+
+typedef struct _CYPHER_BLOCK_24 {
+    CYPHER_BLOCK Blocks[3];
+} NT_RESPONSE, LM_RESPONSE;
+
+typedef struct _IUM_MSV1_0_LM3_RESPONSE {
+    byte Response[16];
+    byte ChallengeFromClient[8];
+} IUM_MSV1_0_LM3_RESPONSE, *PIUM_MSV1_0_LM3_RESPONSE;
+
+typedef enum _IUM_MSV1_0_CREDENTIAL_KEY_TYPE {
+    NiumInvalidCredKey = 1,
+    NiumDeprecatedIUMCredKey = 2,
+    NiumDomainUserCredKey = 3,
+    NiumLocalUserCredKey = 4,
+    NiumExternallySuppliedCredKey = 5
+} IUM_MSV1_0_CREDENTIAL_KEY_TYPE;
+
+typedef struct _MSV1_0_SECRETS {
+    NT_OWF_PASSWORD NtOwfPassword;
+    LM_OWF_PASSWORD LmOwfPassword;
+    SHA_OWF_PASSWORD ShaOwfPassword;
+} MSV1_0_SECRETS, *PMSV1_0_SECRETS;
+
+[switch_type(char)] typedef union _MSV1_0_SECRETS_U {
+    [case(0)] MSV1_0_SECRETS Clear;
+    [default] byte Encrypted[308];
+} MSV1_0_SECRETS_U;
+
+typedef struct _MSV1_0_SECRETS_WRAPPER {
+    [ignore] void* CredIsoObj;
+    char IsEncrypted;
+    char NtPasswordPresent;
+    char LmPasswordPresent;
+    char ShaPasswordPresent;
+    char CredentialKeyPresent;
+    IUM_MSV1_0_CREDENTIAL_KEY_TYPE CredentialKeyType;
+    short EncryptedSize;
+    IUM_MSV1_0_CREDENTIAL_KEY CredentialKeySecret;
+    [switch_is(IsEncrypted)] MSV1_0_SECRETS_U Secrets;
+} MSV1_0_SECRETS_WRAPPER, *PMSV1_0_SECRETS_WRAPPER;
+
+typedef struct _IUM_MSV1_0_IUM_SUPPLEMENTAL_CREDENTIAL {
+    int Version;
+    unsigned int EncryptedCredsSize;
+    [size_is(EncryptedCredsSize)] char EncryptedCreds[];
+} IUM_MSV1_0_IUM_SUPPLEMENTAL_CREDENTIAL, *PIUM_MSV1_0_IUM_SUPPLEMENTAL_CREDENTIAL;
+
+typedef struct _USER_INTERNAL1_INFORMATION {
+    NT_OWF_PASSWORD NtOwfPassword;
+    LM_OWF_PASSWORD LmOwfPassword;
+    byte NtPasswordPresent;
+    byte LmPasswordPresent;
+    byte PasswordExpired;
+} USER_INTERNAL1_INFORMATION, *PUSER_INTERNAL1_INFORMATION;
+
+typedef struct _CACHE_PASSWORDS {
+    USER_INTERNAL1_INFORMATION SecretPasswords;
+} CACHE_PASSWORDS, *PCACHE_PASSWORDS;
+
+typedef struct _NETLOGON_LOGON_IDENTITY_INFO {
+    IUM_UNICODE_STRING LogonDomainName;
+    int ParameterControl;
+    OLD_LARGE_INTEGER Reserved;
+    IUM_UNICODE_STRING UserName;
+    IUM_UNICODE_STRING Workstation;
+} NETLOGON_LOGON_IDENTITY_INFO, *PNETLOGON_LOGON_IDENTITY_INFO;
+
+typedef struct _NETLOGON_INTERACTIVE_INFO {
+    NETLOGON_LOGON_IDENTITY_INFO Identity;
+    LM_OWF_PASSWORD LmOwfPassword;
+    NT_OWF_PASSWORD NtOwfPassword;
+} NETLOGON_INTERACTIVE_INFO, *PNETLOGON_INTERACTIVE_INFO;
+
+typedef struct _NETLOGON_NETWORK_INFO {
+    NETLOGON_LOGON_IDENTITY_INFO Identity;
+    LM_CHALLENGE LmChallenge;
+    IUM_STRING NtChallengeResponse;
+    IUM_STRING LmChallengeResponse;
+} NETLOGON_NETWORK_INFO, *PNETLOGON_NETWORK_INFO;
+
+typedef enum _DPAPI_KEY_TYPE {
+    KEY_TYPE_NTOWF = 0,
+    KEY_TYPE_SHA = 1
+} DPAPI_KEY_TYPE, *PDPAPI_KEY_TYPE;
+
+[
+    uuid(45527AE0-2A7D-4CEC-B214-739F4159C392),
+    version(1.0)
+]
+interface NtlmIum
+{
+    int NtlmIumGetContext(
+        [in] handle_t Binding,
+        [out] CONTEXT_HANDLE* Context
+    );
+
+    // [MS-RDPEAR] <no description>
+    int NtlmIumProtectCredential(
+        [in] CONTEXT_HANDLE Context, 
+        [in, out] MSV1_0_SECRETS_WRAPPER* Credential            // The NTLM credentials to be encrypted.
+    );
+
+    // [MS-RDPEAR] Use the provided credential and challenge to generate the NT and LM response for the NTLM v2 authentication protocol.
+    int NtlmIumLm20GetNtlm3ChallengeResponse(
+        [in] CONTEXT_HANDLE Context,
+        [in] MSV1_0_SECRETS_WRAPPER* Credential,                // The credential from which to generate an NTLM v2 response and session keys.
+        [in] IUM_UNICODE_STRING* UserName,                      // The user name corresponding to the specified credential.
+        [in] IUM_UNICODE_STRING* LogonDomainName,               // The domain name for the specified credential.
+        [in] IUM_UNICODE_STRING* ServerName,                    // The host name of the server from which this challenge originated.
+        [in] byte ChallengeToClient[8],                         // The server-generated NTLM challenge data sent to the client.
+        [out] unsigned short* Ntlm3ResponseLength,              // The length of the Ntlm3Response buffer.
+        [out, size_is(,*Ntlm3ResponseLength)] char** Ntlm3Response, // A byte buffer containing the generated response to the provided challenge, as specified by [MS-NLMP].
+        [out] IUM_MSV1_0_LM3_RESPONSE* Lm3Response,             // A byte buffer containing the generated LMv2 response.
+        [out] USER_SESSION_KEY* UserSessionKey,                 // The generated NTv2 session key.
+        [out] LM_SESSION_KEY* LmSessionKey                      // The generated NTv2 session key.
+    );
+
+    // [MS-RDPEAR] Use the provided credential to calculate a response to this challenge according to the NTLM v1 protocol.
+    int NtlmIumCalculateNtResponse(
+        [in] CONTEXT_HANDLE Context, 
+        [in] NT_CHALLENGE* NtChallenge,                         // The challenge sent by the server.
+        [in] MSV1_0_SECRETS_WRAPPER* Credential,                // The NTLM credentials from which to generate a response.
+        [out] NT_RESPONSE* NtResponse                           // The NTLMv1 response, generated as specified in [MS-NLMP].
+    );
+
+    // [MS-RDPEAR] Use the provided credential and response to calculate a session key according to the NTLM v1 protocol.
+    int NtlmIumCalculateUserSessionKeyNt(
+        [in] CONTEXT_HANDLE Context, 
+        [in, unique] NT_RESPONSE* NtResponse,                   // The response sent during NTLM v1 authentication.
+        [in] MSV1_0_SECRETS_WRAPPER* Credential,                // The NTLM credentials used to generate the response.
+        [out] USER_SESSION_KEY* UserSessionKey                  // The session key, calculated as specified in [MS-NLMP] section 3.3.1.
+    );
+
+    int NtlmIumPasswordValidateInteractive(
+        [in] CONTEXT_HANDLE Context, 
+        [in] char UasCompatibilityRequired, 
+        [in] NETLOGON_INTERACTIVE_INFO* LogonInformation, 
+        [in] MSV1_0_SECRETS_WRAPPER* Credential,
+        [out] int* UserFlags, 
+        [out] USER_SESSION_KEY* UserSessionKey, 
+        [out] LM_SESSION_KEY* LmSessionKey, 
+        [out] int* IsValid
+    );
+
+    int NtlmIumPasswordValidateNetwork(
+        [in] CONTEXT_HANDLE Context, 
+        [in] char UasCompatibilityRequired, 
+        [in] NETLOGON_NETWORK_INFO* LogonInformation, 
+        [in] MSV1_0_SECRETS_WRAPPER* Credential,
+        [out] int* UserFlags, 
+        [out] USER_SESSION_KEY* UserSessionKey, 
+        [out] LM_SESSION_KEY* LmSessionKey, 
+        [out] int* IsValid
+    );
+
+    int NtlmIumIsGMSACred(
+        [in] CONTEXT_HANDLE Context, 
+        [in] MSV1_0_SECRETS_WRAPPER* Credential, 
+        [out] int* IsGmsaCred
+    );
+
+    int NtlmIumMakeSecretPasswordNT5(
+        [in] CONTEXT_HANDLE Context,
+        [in] IUM_UNICODE_STRING* Salt,
+        [in] MSV1_0_SECRETS_WRAPPER* Credential,
+        [in] int IterationsInThousands,
+        [in, out] CACHE_PASSWORDS* SecretPassword
+    );
+
+    // [MS-RDPEAR] Compare the provided credentials to determine whether they're identical.
+    int NtlmIumCompareCredentials(
+        [in] CONTEXT_HANDLE Context,
+        [in] MSV1_0_SECRETS_WRAPPER* LhsCredential,             // The first credential to be compared.
+        [in] MSV1_0_SECRETS_WRAPPER* RhsCredential,             // The second credential to be compared.
+        [in, out, unique] int* AreNtOwfsEqual,                  // Indicates whether the NTOWF values in the credentials matched.
+        [in, out, unique] int* AreLmOwfsEqual,                  // Indicates whether the LMOWF values in the credentials matched.
+        [in, out, unique] int* AreShaOwfsEqual                  // Indicates whether the SHA1 values in the credentials matched.
+    );
+
+    int NtlmIumDecryptDpapiMasterKey(
+        [in] CONTEXT_HANDLE Context, 
+        [in] MSV1_0_SECRETS_WRAPPER* Credential, 
+        [in] DPAPI_KEY_TYPE KeyType,
+        [in] unsigned int EntropySize, 
+        [in, size_is(EntropySize)] char* Entropy,               // Similar to [pOptionalEntropy] in [CryptProtectData / CryptUnprotectData]
+        [in] unsigned int EncryptedMasterKeySize,
+        [in, size_is(EncryptedMasterKeySize)] char* EncryptedMasterKey,
+        [in] unsigned int RootSecretSize,
+        [in, size_is(RootSecretSize)] char* RootSecret,
+        [in] unsigned int SidLength,
+        [in, size_is(SidLength)] char* Sid,
+        [out] unsigned int* DecryptedMasterKeySize,
+        [out, size_is(,*DecryptedMasterKeySize)] char** DecryptedMasterKey
+    );
+
+    int NtlmIumGenerateRootSecret(
+        [in] CONTEXT_HANDLE Context,
+        [out] unsigned int* RootSecretSize, 
+        [out, size_is(,*RootSecretSize)] char** RootSecret
+    );
+
+    int NtlmIumGetCredentialKey(
+        [in] CONTEXT_HANDLE Context, 
+        [in] unsigned int RootSecretSize,
+        [in, size_is(RootSecretSize)] char* RootSecret,         // NtlmGlobalRootSecret
+        [in] MSV1_0_SECRETS_WRAPPER* Credential, 
+        [in] unsigned int SidLength,
+        [in, size_is(SidLength)] char* Sid,
+        [in] IUM_MSV1_0_CREDENTIAL_KEY_TYPE CredentialKeyType,
+        [out] IUM_MSV1_0_CREDENTIAL_KEY* CredentialKey
+    );
+
+    int NtlmIumUpdateSharedConfiguration(
+        [in] CONTEXT_HANDLE Context, 
+        [in] OLD_LARGE_INTEGER* NewConfig,
+        [out] OLD_LARGE_INTEGER* ResultConfig
+    );
+
+    int NtlmIumMakeOwfsFromIumSupplementalCredential(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_MSV1_0_IUM_SUPPLEMENTAL_CREDENTIAL* SupplementalCredential, 
+        [out] MSV1_0_SECRETS_WRAPPER* OwfCredential
+    );
+
+    int NtlmIumMakeOwfsFromIumEncryptedPassword(
+        [in] CONTEXT_HANDLE Context, 
+        [in] unsigned int EncryptedPasswordSize, 
+        [in, size_is(EncryptedPasswordSize)] char* EncryptedPassword, 
+        [out] MSV1_0_SECRETS_WRAPPER* OwfCredential
+    );
+
+    int NtlmIumConvertCredManPasswordToSupplementalCredential(
+        [in] CONTEXT_HANDLE Context, 
+        [in] unsigned int CredManPasswordSize,
+        [in, size_is(CredManPasswordSize)] char* CredManPassword,
+        [out] unsigned int* SupplementalCredentialSize, 
+        [out, size_is(,*SupplementalCredentialSize)] char** SupplementalCredential
+    );
+
+    int NtlmIumConvertCredManPasswordToNtlmEncryptedPassword(
+        [in] CONTEXT_HANDLE Context, 
+        [in] unsigned int CredManPasswordSize,
+        [in, size_is(CredManPasswordSize)] char* CredManPassword,
+        [out] unsigned int* EncryptedPasswordSize, 
+        [out, size_is(,*EncryptedPasswordSize)] char** EncryptedPassword
+    );
+
+    int NtlmIumCompareEncryptedNtowfAndDecryptSecrets(
+        [in] CONTEXT_HANDLE Context,
+        [in] IUM_UNICODE_STRING* PlaintextPassword,             // Compares against Unprotected 'EncryptedCredentials'.Secrets .... Password or NtOwf?
+        [in] MSV1_0_SECRETS_WRAPPER* EncryptedCredential,
+        [out] MSV1_0_SECRETS_WRAPPER* DecryptedCredential
+    );
+
+    int NtlmIumProtectSspCredentialPassword(
+        [in] CONTEXT_HANDLE Context, 
+        [in] IUM_UNICODE_STRING* PlaintextPassword, 
+        [out] unsigned int* EncryptedPasswordSize, 
+        [out, size_is(,*EncryptedPasswordSize)] char** EncryptedPassword
+    );
+    
+    int NtlmIumComparePasswordToProtectedPassword(
+        [in] CONTEXT_HANDLE Context,
+        [in] IUM_UNICODE_STRING* PlaintextPassword,
+        [in] IUM_UNICODE_STRING* EncryptedPassword,
+        [out] int* IsEqual
+    );
+}
