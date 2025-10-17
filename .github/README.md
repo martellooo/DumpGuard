@@ -65,6 +65,14 @@ lsa-whisperer.exe msv1_0 Lm20GetChallengeResponse --luid {session id} --challeng
 
 I have reverse engineered and recreated all the interfaces exposed by Credential Guard (*LsaIso.exe*) and included them in this repository, in case anyone wants to conduct further research.
 
+As of October 2025, the following interfaces are currently implemented:
+- BCryptIum
+- CloudApIum
+- KerberosIum
+- LsaIsoMgmtIum
+- NtlmIum
+- ProvIum
+
 ## Acknowledgements
 
 Thank you to [SpecterOps](https://specterops.io/) for supporting this research and to my coworkers who have helped with its development.
