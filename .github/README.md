@@ -1,6 +1,6 @@
 # DumpGuard
 [![BSD3 License](https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=flat)](LICENSE)
-[![Bloodhound Slack](https://img.shields.io/badge/BloodHound%20Slack-4A154B?logo=slack&logoColor=white)](https://ghst.ly/BHSlack)
+[![Slack](https://img.shields.io/badge/Slack-SpecterOps-02B36C)](https://slack.specterops.io)
 [![Sponsored by SpecterOps](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/specterops/.github/main/config/shield.json)](https://github.com/specterops)
 
 ![Logo](logo.jpeg)
