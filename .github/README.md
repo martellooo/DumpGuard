@@ -1,5 +1,5 @@
 # DumpGuard
-[![BSD3 License](https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=flat)](LICENSE)
+[![BSD3 License](https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=flat)](../LICENSE)
 [![Slack](https://img.shields.io/badge/Slack-SpecterOps-02B36C)](https://slack.specterops.io)
 [![Sponsored by SpecterOps](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/specterops/.github/main/config/shield.json)](https://github.com/specterops)
 
