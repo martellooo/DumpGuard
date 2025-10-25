@@ -1,6 +1,6 @@
 # DumpGuard
-[![BSD3 License](https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=flat)](LICENSE)
-[![Bloodhound Slack](https://img.shields.io/badge/BloodHound%20Slack-4A154B?logo=slack&logoColor=white)](https://ghst.ly/BHSlack)
+[![BSD3 License](https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=flat)](../LICENSE)
+[![Slack](https://img.shields.io/badge/Slack-SpecterOps-02B36C)](https://slack.specterops.io)
 [![Sponsored by SpecterOps](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/specterops/.github/main/config/shield.json)](https://github.com/specterops)
 
 ![Logo](logo.jpeg)
@@ -56,7 +56,7 @@ Privilege Requirement: **SYSTEM**.
 DumpGuard.exe /mode:all
 ```
 
-This is equivalent to the following [LSA Whisperer](https://github.com/EvanMcBroom/lsa-whisperer) command:
+This attack can also be carried out using [LSA Whisperer](https://github.com/EvanMcBroom/lsa-whisperer) with the following command:
 ```
 lsa-whisperer.exe msv1_0 Lm20GetChallengeResponse --luid {session id} --challenge {challenge to clients} [flags...]
 ```
@@ -64,6 +64,14 @@ lsa-whisperer.exe msv1_0 Lm20GetChallengeResponse --luid {session id} --challeng
 ## Bonus Information
 
 I have reverse engineered and recreated all the interfaces exposed by Credential Guard (*LsaIso.exe*) and included them in this repository, in case anyone wants to conduct further research.
+
+As of October 2025, the following interfaces are implemented:
+- BCryptIum
+- CloudApIum
+- KerberosIum
+- LsaIsoMgmtIum
+- NtlmIum
+- ProvIum
 
 ## Acknowledgements
 
@@ -78,5 +86,5 @@ Thank you to [SpecterOps](https://specterops.io/) for supporting this research a
 - [Kekeo](https://github.com/gentilkiwi/kekeo) ([Benjamin Delpy](https://github.com/gentilkiwi)) - A little toolbox to play with Microsoft Kerberos in C.
 
 ## Related Work
-- [Oliver Lyak](https://github.com/ly4k) ([2022](https://research.ifcr.dk/pass-the-challenge-defeating-windows-defender-credential-guard-31a892eee22)) - For what is, to my knowledge, the only public research on dumping credentials protected by Credential Guard.
-- [James Forshaw](https://x.com/tiraniddo) ([2022](https://project-zero.issues.chromium.org/issues/42451433), [2022](https://project-zero.issues.chromium.org/issues/42451435), [2022](https://project-zero.issues.chromium.org/issues/42451397), [2022](https://project-zero.issues.chromium.org/issues/42451436)) - For vulnerability submissions that slightly documents some of the undocumented interfaces that we have researched.
+- [Oliver Lyak](https://github.com/ly4k) ([2022](https://research.ifcr.dk/pass-the-challenge-defeating-windows-defender-credential-guard-31a892eee22)) - To my knowledge, the only public research on dumping credentials protected by Credential Guard.
+- [James Forshaw](https://x.com/tiraniddo) ([2022](https://project-zero.issues.chromium.org/issues/42451433), [2022](https://project-zero.issues.chromium.org/issues/42451435), [2022](https://project-zero.issues.chromium.org/issues/42451397), [2022](https://project-zero.issues.chromium.org/issues/42451436)) - Vulnerability submissions that slightly documents some of the undocumented interfaces that we have researched.
