@@ -365,8 +365,7 @@ namespace DumpGuard
 
                 try
                 {
-                    if (action != null)
-                        action();
+                    action?.Invoke();
                 }
                 finally
                 {

@@ -48,7 +48,7 @@ BOOL NtlmEncodeCredIsoRemoteInput(PNtlmCredIsoRemoteInput pInput, PVOID* ppvEnco
 	return Result;
 }
 
-BOOL NtlmDecodeCredIsoRemoteOutput(PVOID pvOutput, ULONG cbOutput, PNtlmCredIsoRemoteInput* ppDecoded)
+BOOL NtlmDecodeCredIsoRemoteOutput(PVOID pvOutput, ULONG cbOutput, PNtlmCredIsoRemoteOutput* ppDecoded)
 {
 	BOOL Result = FALSE;
 
